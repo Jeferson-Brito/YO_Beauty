@@ -119,7 +119,7 @@ export function CategoryPage() {
   if (category.isError) {
     return (
       <main className="store-wrap py-10">
-        <h1 className="script-title text-4xl sm:text-6xl">Categoria</h1>
+        <h1 className="type-title">Categoria</h1>
         <p className="mt-8">Categoria não encontrada.</p>
       </main>
     );
@@ -221,21 +221,21 @@ export function ProductPage() {
 
   return (
     <main className="store-wrap py-8 sm:py-10">
-      <nav className="flex flex-wrap items-center gap-2 text-xs tracking-[0.08em] text-ink-500 uppercase" aria-label="Caminho">
-        <Link to="/" className="hover:text-magenta-600">Início</Link>
+      <nav className="flex min-w-0 items-center gap-2 overflow-hidden text-xs tracking-[0.08em] text-ink-500 uppercase" aria-label="Caminho">
+        <Link to="/" className="shrink-0 hover:text-magenta-600">Início</Link>
         <span aria-hidden="true">/</span>
         {category ? (
           <>
-            <Link to={`/categoria/${category.slug}`} className="hover:text-magenta-600">{category.name}</Link>
+            <Link to={`/categoria/${category.slug}`} className="shrink-0 hover:text-magenta-600">{category.name}</Link>
             <span aria-hidden="true">/</span>
           </>
         ) : null}
-        <span className="text-ink-700">{item.name}</span>
+        <span className="min-w-0 truncate text-ink-700">{item.name}</span>
       </nav>
 
-      <section className="mt-6 grid items-start gap-8 lg:grid-cols-2">
+      <section className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <div>
-          <div className="overflow-hidden rounded-[28px] border border-blush-200 bg-blush-50">
+          <div className="mx-auto w-full max-w-md overflow-hidden rounded-[28px] border border-blush-200 bg-blush-50 lg:max-w-none">
             <div className="aspect-square">
               {activePhoto ? (
                 <img src={activePhoto.imageUrl} alt={activePhoto.altText || item.name} className="h-full w-full object-contain" />
@@ -264,23 +264,21 @@ export function ProductPage() {
 
         <div className="lg:pt-2">
           {category ? (
-            <Link to={`/categoria/${category.slug}`} className="text-link text-xs font-semibold tracking-[0.16em] uppercase">
+            <Link to={`/categoria/${category.slug}`} className="type-kicker text-link">
               {category.name}
             </Link>
           ) : null}
-          <h1 className="mt-2 font-display text-3xl break-words text-ink-900 sm:text-5xl">{item.name}</h1>
-          <p className="mt-4 flex flex-wrap items-baseline gap-x-3 text-price">
+          <h1 className="type-product mt-2 break-words">{item.name}</h1>
+          <p className="mt-3 flex flex-wrap items-baseline gap-x-3 text-price">
             {onSale ? <span className="text-base text-ink-500 line-through">{formatBRL(item.priceCents)}</span> : null}
             <span className="text-3xl font-semibold">{formatBRL(item.effectivePriceCents)}</span>
           </p>
           <ProductReviewSummary slug={item.slug} />
-          {item.shortDescription ? <p className="mt-4 max-w-xl text-base text-ink-900">{item.shortDescription}</p> : null}
-          <p className="mt-2 max-w-xl text-sm leading-6 text-ink-700">{item.description}</p>
           <p className={`mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-[0.08em] uppercase ${item.inStock ? 'bg-blush-100 text-magenta-700' : 'bg-blush-50 text-ink-500'}`}>
             {stockLabel}
           </p>
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="mt-5 flex flex-wrap items-center gap-3">
             <div className="flex h-11 items-center rounded-full border border-blush-200">
               <button type="button" className="grid h-11 w-11 place-items-center text-lg text-ink-700 transition hover:bg-blush-100" aria-label="Diminuir quantidade" onClick={() => { setNotice(''); setQuantity((value) => Math.max(1, value - 1)); }}>−</button>
               <span className="min-w-8 px-1 text-center text-sm font-semibold" aria-live="polite">{quantity}</span>
@@ -300,6 +298,8 @@ export function ProductPage() {
             </button>
           </div>
           <p className="mt-3 min-h-5 text-sm text-magenta-700" aria-live="polite">{notice}</p>
+          {item.shortDescription ? <p className="type-lead mt-4 max-w-xl">{item.shortDescription}</p> : null}
+          <p className="type-body mt-2 max-w-xl">{item.description}</p>
 
           {benefits.length > 0 ? (
             <ul className="mt-2 space-y-2 border-t border-blush-200 pt-5">
@@ -318,7 +318,7 @@ export function ProductPage() {
 
       {suggestions.length > 0 ? (
         <section className="mt-14">
-          <h2 className="script-title text-4xl sm:text-5xl">Você também pode gostar</h2>
+          <h2 className="type-section">Você também pode gostar</h2>
           <div className="mt-6 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {suggestions.map((entry) => (
               <ProductCard key={entry.id} product={entry} />

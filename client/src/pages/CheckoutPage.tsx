@@ -111,7 +111,7 @@ export function CheckoutPage() {
   if (!user) {
     return (
       <main className="store-wrap py-16">
-        <h1 className="script-title text-4xl sm:text-6xl">Finalizar compra</h1>
+        <h1 className="type-title">Finalizar compra</h1>
         <p className="mt-4 max-w-xl text-ink-700">Entre ou crie uma conta para confirmar o pedido. Os itens do carrinho continuam salvos neste navegador.</p>
         <div className="mt-6 flex max-w-xs flex-col gap-3">
           <Link to="/login?next=/checkout" className="btn-cart">Entrar</Link>
@@ -208,7 +208,7 @@ export function CheckoutPage() {
   return (
     <main className="store-wrap grid items-start gap-8 py-8 sm:py-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(280px,0.9fr)]">
       <section className="rounded-3xl border border-blush-200 bg-white p-4 sm:p-6">
-        <h1 className="script-title text-4xl sm:text-6xl">Entrega</h1>
+        <h1 className="type-title">Entrega</h1>
         <p className="mt-2 text-sm text-ink-500">Digite o CEP para preencher a rua, o bairro, a cidade e a UF.</p>
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <label className="text-sm sm:col-span-2">Quem recebe<input className="field mt-1" value={form.recipientName} onChange={(event) => update('recipientName', event.target.value)} /></label>
@@ -260,7 +260,7 @@ export function CheckoutPage() {
         </fieldset>
       </section>
       <aside className="h-fit rounded-3xl border border-blush-200 bg-white p-5 lg:sticky lg:top-[var(--store-header-offset,196px)]">
-        <h2 className="font-display text-3xl text-magenta-700">Resumo</h2>
+        <h2 className="type-section">Resumo</h2>
         <ul className="mt-4 space-y-3">
           {quoted?.lines.map((line) => (
             <li key={line.productId} className="flex items-center gap-3">
@@ -312,7 +312,7 @@ export function OrderPage() {
 
   return (
     <main className="store-wrap max-w-3xl py-8 sm:py-10">
-      <h1 className="script-title text-4xl sm:text-6xl">Pedido confirmado</h1>
+      <h1 className="type-title">Pedido confirmado</h1>
       <div className="mt-6 rounded-3xl border border-blush-200 bg-white p-4 sm:p-6">
         <p className="text-ink-700">Número {data.orderNumber}</p>
         <p className="mt-1 text-sm text-ink-500">{[paymentLabel[data.paymentStatus] ?? data.paymentStatus, orderLabel[data.orderStatus] ?? data.orderStatus].filter((label, index, list) => list.indexOf(label) === index).join(' · ')}</p>

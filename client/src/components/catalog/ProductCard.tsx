@@ -39,7 +39,7 @@ export function ProductCard({ product }: { product: ProductCardData }) {
           </div>
         </Link>
       </div>
-      <h3 className="mt-2 line-clamp-2 min-h-8 text-xs leading-4 text-ink-700">
+      <h3 className="type-card mt-2 line-clamp-2 min-h-8">
         <Link to={`/produto/${product.slug}`} className="transition group-hover:text-magenta-600">{product.name}</Link>
       </h3>
       <p className="mt-1 min-h-4 text-[10px] text-ink-500 line-through">{onSale ? formatBRL(product.priceCents) : ''}</p>

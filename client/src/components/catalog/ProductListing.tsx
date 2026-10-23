@@ -44,8 +44,8 @@ export function ProductListing({
     <main className="store-wrap py-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="script-title text-4xl break-words sm:text-6xl">{title}</h1>
-          {description ? <p className="mt-3 max-w-2xl text-sm text-ink-500">{description}</p> : null}
+          <h1 className="type-title break-words">{title}</h1>
+          {description ? <p className="type-body mt-3 max-w-2xl">{description}</p> : null}
           <p className="mt-2 text-sm text-ink-500">{countLabel}</p>
         </div>
         <label className="text-xs font-medium tracking-wide text-ink-500 uppercase">

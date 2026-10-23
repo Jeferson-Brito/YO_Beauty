@@ -153,13 +153,13 @@ export function AccountPage() {
 
   return (
     <main className="store-wrap py-8 sm:py-10">
-      <h1 className="script-title text-4xl sm:text-6xl">Minha conta</h1>
+      <h1 className="type-title">Minha conta</h1>
       <div className="mt-6 grid items-start gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
         <section className="rounded-[1.75rem] border border-blush-200 bg-white p-5">
           <span className="grid h-14 w-14 place-items-center rounded-full bg-blush-50 font-display text-2xl text-magenta-700" aria-hidden>
             {initial}
           </span>
-          <h2 className="mt-4 font-display text-3xl text-ink-900">{user.name}</h2>
+          <h2 className="type-product mt-4">{user.name}</h2>
           <p className="mt-1 break-all text-sm text-ink-500">{user.email}</p>
           {user.role === 'ADMIN' ? (
             <Link to="/admin" className="text-link mt-4 inline-block text-sm">Abrir o painel da loja</Link>
@@ -224,13 +224,13 @@ function OrdersPreview() {
   return (
     <section>
       <div className="mb-3 flex items-end justify-between gap-3">
-        <h2 className="font-display text-3xl text-magenta-700">Pedidos</h2>
+        <h2 className="type-section">Pedidos</h2>
         {list.length > 0 ? <p className="text-sm text-ink-500">{list.length === 1 ? '1 pedido' : `${list.length} pedidos`}</p> : null}
       </div>
       {orders.isLoading ? <p className="text-sm text-ink-500">Carregando pedidos...</p> : null}
       {!orders.isLoading && list.length === 0 ? (
         <div className="rounded-[1.75rem] border border-blush-200 bg-blush-50 px-6 py-10 text-center">
-          <h3 className="font-display text-2xl text-ink-900">Você ainda não tem pedidos</h3>
+          <h3 className="type-product">Você ainda não tem pedidos</h3>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-500">Quando uma compra for confirmada, o número, os itens e o total aparecem aqui.</p>
           <Link to="/produtos" className="btn-cart mx-auto mt-5 max-w-xs">Ver produtos</Link>
         </div>
@@ -262,7 +262,7 @@ function AuthShell({ title, subtitle, children }: { title: string; subtitle: str
   return (
     <main className="store-wrap py-12">
       <div className="mx-auto max-w-md rounded-3xl border border-blush-200 bg-white p-5 shadow-sm sm:p-8">
-        <h1 className="script-title text-4xl sm:text-6xl">{title}</h1>
+        <h1 className="type-title">{title}</h1>
         <p className="mt-2 mb-6 text-sm text-ink-500">{subtitle}</p>
         {children}
       </div>

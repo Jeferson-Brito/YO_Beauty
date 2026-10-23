@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ApiError, apiGet, apiSend, apiUpload } from '../../services/api';
 import type { AdminCategory, AdminImage, AdminProduct, AdminProductSummary, ProductChange, ProductStatus } from '../../types/admin';
 import type { DataResponse, ListResponse } from '../../types/catalog';
@@ -137,6 +137,10 @@ function draftFrom(product?: AdminProduct): Draft {
 
 export function ProductFormPage() {
   const { id } = useParams();
+  const location = useLocation();
+  const photoError = location.state && typeof location.state === 'object' && 'photoError' in location.state
+    ? String((location.state as { photoError?: string }).photoError ?? '')
+    : '';
   const product = useQuery({
     queryKey: ['admin', 'product', id],
     enabled: Boolean(id),
@@ -144,10 +148,28 @@ export function ProductFormPage() {
   });
   if (id && product.isLoading) return <p>Carregando produto...</p>;
   if (id && product.isError) return <Notice>Produto não encontrado.</Notice>;
-  return <ProductForm key={id ?? 'novo'} product={product.data?.data} />;
+  return <ProductForm key={id ?? 'novo'} product={product.data?.data} photoError={photoError} />;
 }
 
-function ProductForm({ product }: { product?: AdminProduct }) {
+async function uploadCover(productId: string, file: File, existing: AdminImage[]) {
+  let images = existing;
+  while (images.length >= 8) {
+    const last = images[images.length - 1];
+    await apiSend(`/api/admin/products/${productId}/images/${last.id}`, 'DELETE');
+    images = images.slice(0, -1);
+  }
+  const uploaded = await apiUpload<DataResponse<AdminImage>>(`/api/admin/products/${productId}/images`, file);
+  if (images.length > 0) {
+    await apiSend(`/api/admin/products/${productId}/images/reorder`, 'PATCH', {
+      imageIds: [uploaded.data.id, ...images.map((image) => image.id)],
+    });
+    for (const image of images) {
+      await apiSend(`/api/admin/products/${productId}/images/${image.id}`, 'DELETE');
+    }
+  }
+}
+
+function ProductForm({ product, photoError = '' }: { product?: AdminProduct; photoError?: string }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const categories = useQuery({
@@ -160,26 +182,24 @@ function ProductForm({ product }: { product?: AdminProduct }) {
     queryFn: () => apiGet<DataResponse<ProductChange[]>>(`/api/admin/products/${product?.id}/changes`),
   });
   const [draft, setDraft] = useState<Draft>(() => draftFrom(product));
-  const [error, setError] = useState('');
+  const [error, setError] = useState(photoError);
   const [saved, setSaved] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [pendingPhoto, setPendingPhoto] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!pendingPhoto) {
+      setPreviewUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(pendingPhoto);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [pendingPhoto]);
   const photo = useMutation({
     mutationFn: async (file: File) => {
-      if (!product) throw new Error('Salve o produto para enviar a foto.');
-      let existing = product.images;
-      while (existing.length >= 8) {
-        const last = existing[existing.length - 1];
-        await apiSend(`/api/admin/products/${product.id}/images/${last.id}`, 'DELETE');
-        existing = existing.slice(0, -1);
-      }
-      const uploaded = await apiUpload<DataResponse<AdminImage>>(`/api/admin/products/${product.id}/images`, file);
-      if (existing.length > 0) {
-        await apiSend(`/api/admin/products/${product.id}/images/reorder`, 'PATCH', {
-          imageIds: [uploaded.data.id, ...existing.map((image) => image.id)],
-        });
-        for (const image of existing) {
-          await apiSend(`/api/admin/products/${product.id}/images/${image.id}`, 'DELETE');
-        }
-      }
+      if (!product) return;
+      await uploadCover(product.id, file, product.images);
     },
     onSuccess: async () => {
       setError('');
@@ -212,6 +232,7 @@ function ProductForm({ product }: { product?: AdminProduct }) {
       setError('Escolha a categoria.');
       return;
     }
+    setSaving(true);
     const body = {
       name: draft.name,
       slug: draft.slug || undefined,
@@ -232,6 +253,15 @@ function ProductForm({ product }: { product?: AdminProduct }) {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'products'] });
       await queryClient.invalidateQueries({ queryKey: ['home'] });
       if (!product) {
+        if (pendingPhoto) {
+          try {
+            await uploadCover(response.data.id, pendingPhoto, []);
+          } catch (caught) {
+            const message = caught instanceof ApiError ? caught.message : 'O produto foi salvo, mas a foto não foi enviada.';
+            navigate(`/admin/produtos/${response.data.id}`, { state: { photoError: message } });
+            return;
+          }
+        }
         navigate(`/admin/produtos/${response.data.id}`);
         return;
       }
@@ -240,39 +270,40 @@ function ProductForm({ product }: { product?: AdminProduct }) {
       await queryClient.invalidateQueries({ queryKey: ['admin', 'changes', product.id] });
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Não foi possível salvar.');
+    } finally {
+      setSaving(false);
     }
   }
 
-  const cover = product?.images[0]?.imageUrl ?? null;
+  const cover = previewUrl ?? product?.images[0]?.imageUrl ?? null;
+  const photoLabel = photo.isPending || (saving && pendingPhoto) ? 'Enviando...' : cover ? 'Alterar foto' : 'Adicionar foto';
 
   return (
     <div className="space-y-4">
       <Link to="/admin/produtos" className="text-link text-sm">Voltar para a lista</Link>
       <section className="rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <label
-            className="group relative mx-auto grid h-36 w-36 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-[1.75rem] border border-blush-200 bg-blush-50 transition hover:border-magenta-400 sm:mx-0 sm:h-40 sm:w-40"
-            onClick={(event) => {
-              if (!product) {
-                event.preventDefault();
-                setError('Salve o produto para enviar a foto.');
-              }
-            }}
-          >
+          <label className="group relative mx-auto grid h-36 w-36 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-[1.75rem] border border-blush-200 bg-blush-50 transition hover:border-magenta-400 sm:mx-0 sm:h-40 sm:w-40">
             {cover ? <img src={cover} alt="" className="h-full w-full object-contain p-3" /> : <span className="px-3 text-center text-xs text-ink-500">Sem foto</span>}
             <span className="absolute inset-x-2 bottom-2 rounded-full bg-white/95 px-2 py-1 text-center text-[10px] font-semibold tracking-wide text-magenta-700 uppercase">
-              {photo.isPending ? 'Enviando...' : 'Alterar foto'}
+              {photoLabel}
             </span>
             <input
               type="file"
               className="sr-only"
               accept="image/jpeg,image/png,image/webp,image/gif"
-              aria-label="Alterar foto do produto"
-              disabled={!product || photo.isPending}
+              aria-label={cover ? 'Alterar foto do produto' : 'Adicionar foto do produto'}
+              disabled={photo.isPending || saving}
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = '';
-                if (file) photo.mutate(file);
+                if (!file) return;
+                setError('');
+                if (!product) {
+                  setPendingPhoto(file);
+                  return;
+                }
+                photo.mutate(file);
               }}
             />
           </label>
@@ -286,7 +317,7 @@ function ProductForm({ product }: { product?: AdminProduct }) {
               {draft.isNewArrival ? <span className="rounded-full bg-gold-300/40 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-gold-700 uppercase">Lançamento</span> : null}
             </div>
           </div>
-          <button type="button" className="btn-cart w-auto shrink-0 self-center px-6 sm:self-start" onClick={() => void save()}>Salvar produto</button>
+          <button type="button" className="btn-cart w-auto shrink-0 self-center px-6 sm:self-start" disabled={saving} onClick={() => void save()}>{saving ? 'Salvando...' : 'Salvar produto'}</button>
         </div>
         <dl className="mt-6 grid grid-cols-2 gap-3 border-t border-blush-100 pt-5 sm:grid-cols-4">
           <ProfileFact label="Preço">

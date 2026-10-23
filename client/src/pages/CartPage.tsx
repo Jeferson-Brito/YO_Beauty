@@ -79,14 +79,14 @@ export function CartPage() {
 
   return (
     <main className="store-wrap py-8 sm:py-10">
-      <h1 className="script-title text-4xl sm:text-6xl">Meu carrinho</h1>
+      <h1 className="type-title">Meu carrinho</h1>
       {cart.length === 0 ? (
         <>
           <section className="mt-8 rounded-[2rem] border border-blush-200 bg-blush-50 px-6 py-12 text-center sm:px-10">
             <span className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-white text-magenta-600 shadow-sm">
               <ShoppingBag size={28} aria-hidden />
             </span>
-            <h2 className="mt-5 font-display text-2xl text-ink-900 sm:text-3xl">Seu carrinho está vazio</h2>
+            <h2 className="type-product mt-5">Seu carrinho está vazio</h2>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-ink-500">
               Escolha makes, cosméticos e acessórios. A foto, a quantidade e o total aparecem aqui assim que você adicionar um produto.
             </p>
@@ -94,7 +94,7 @@ export function CartPage() {
           </section>
           {suggestions.length > 0 ? (
             <section className="mt-10">
-              <h2 className="font-display text-2xl text-magenta-700 sm:text-3xl">Você pode gostar</h2>
+              <h2 className="type-section">Você pode gostar</h2>
               <div className="mt-4 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-6">
                 {suggestions.map((product) => <ProductCard key={product.id} product={product} />)}
               </div>
@@ -149,7 +149,7 @@ export function CartPage() {
             </ul>
           </section>
           <aside className="rounded-[1.75rem] border border-blush-200 bg-white p-5 lg:sticky lg:top-[var(--store-header-offset,196px)]">
-            <h2 className="font-display text-3xl text-magenta-700">Resumo</h2>
+            <h2 className="type-section">Resumo</h2>
             <p className="mt-1 text-sm text-ink-500">{itemCountLabel(pieces)}</p>
             {threshold > 0 ? (
               <div className="mt-4">
@@ -232,7 +232,7 @@ export function FavoritesPage() {
   if (favorites.length === 0) {
     return (
       <main className="store-wrap py-10">
-        <h1 className="script-title text-4xl sm:text-6xl">Favoritos</h1>
+        <h1 className="type-title">Favoritos</h1>
         <p className="mt-6 text-ink-500">Você ainda não marcou produtos como favoritos.</p>
       </main>
     );

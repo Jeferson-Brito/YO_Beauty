@@ -377,9 +377,11 @@ async function ensurePage(slug: string, title: string, content: string) {
 export async function seed() {
   const demo = process.env.SEED_DEMO === 'true';
   const categoryIds = new Map<string, string>();
-  for (const category of categories) {
-    const saved = await ensureCategory(category);
-    categoryIds.set(saved.slug, saved.id);
+  if (demo) {
+    for (const category of categories) {
+      const saved = await ensureCategory(category);
+      categoryIds.set(saved.slug, saved.id);
+    }
   }
 
   const productIds = new Map<string, string>();
@@ -454,6 +456,7 @@ export async function seed() {
     });
   }
 
+  const lancamentosId = categoryIds.get('lancamentos');
   await ensureSection('secao-lancamentos', {
     title: 'Lançamentos',
     subtitle: 'Chegaram novidades incríveis!',
@@ -465,9 +468,10 @@ export async function seed() {
     productsLimit: 8,
     buttonText: 'CONFERIR',
     buttonUrl: '/categoria/lancamentos',
-    category: { connect: { id: categoryIds.get('lancamentos') as string } },
+    ...(lancamentosId ? { category: { connect: { id: lancamentosId } } } : {}),
   });
 
+  const kitsId = categoryIds.get('kits');
   await ensureSection('secao-kits', {
     title: 'Kits especiais',
     subtitle: 'Para todas as ocasiões',
@@ -479,7 +483,7 @@ export async function seed() {
     productsLimit: 8,
     buttonText: 'VER KITS',
     buttonUrl: '/categoria/kits',
-    category: { connect: { id: categoryIds.get('kits') as string } },
+    ...(kitsId ? { category: { connect: { id: kitsId } } } : {}),
   });
 
   await ensureSection('secao-mais-vendidos', {

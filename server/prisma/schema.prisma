@@ -1,6 +1,5 @@
-// Yo Beauty — modelo local em SQLite.
+// Yo Beauty — PostgreSQL (Supabase).
 // Valores monetários são inteiros em centavos.
-// Enums do Prisma são gravados como texto no SQLite e podem virar enums nativos no PostgreSQL.
 // O seed não cria pedidos, pagamentos nem eventos de analytics.
 
 generator client {
@@ -8,7 +7,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

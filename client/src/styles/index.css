@@ -18,8 +18,8 @@
   --color-ink-700: #5c3a48;
   --color-ink-900: #2b1820;
   --color-price: #c2185b;
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-script: "Allura", cursive;
+  --font-display: "Montserrat", "Segoe UI", sans-serif;
+  --font-script: "Cormorant Garamond", Georgia, serif;
   --font-sans: "Montserrat", "Segoe UI", sans-serif;
 }
 
@@ -59,11 +59,74 @@
     margin-inline: auto;
   }
 
-  .script-title {
+  .script-title,
+  .type-title,
+  .type-section {
     font-family: var(--font-script);
-    font-weight: 400;
-    line-height: 1.05;
+    font-weight: 600;
+    line-height: 1.15;
     color: var(--color-magenta-600);
+  }
+
+  .type-title {
+    font-size: 2.5rem;
+  }
+
+  .type-section {
+    font-size: 2rem;
+  }
+
+  .type-product,
+  .type-card {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-ink-900);
+  }
+
+  .type-product {
+    font-size: 1.25rem;
+    line-height: 1.35;
+  }
+
+  .type-card {
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1rem;
+    letter-spacing: 0;
+    color: var(--color-ink-700);
+  }
+
+  .type-kicker,
+  .type-note {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .type-kicker {
+    font-weight: 600;
+    color: var(--color-magenta-700);
+  }
+
+  .type-note {
+    font-weight: 500;
+    color: var(--color-ink-500);
+  }
+
+  .type-lead {
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--color-ink-900);
+  }
+
+  .type-body {
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: var(--color-ink-700);
   }
 
   .btn-cart {
@@ -113,6 +176,18 @@
   }
 
   @media (min-width: 640px) {
+    .type-title {
+      font-size: 3.25rem;
+    }
+
+    .type-section {
+      font-size: 2.5rem;
+    }
+
+    .type-product {
+      font-size: 1.5rem;
+    }
+
     .btn-cart {
       padding: 0.55rem 0.75rem;
       font-size: 11px;

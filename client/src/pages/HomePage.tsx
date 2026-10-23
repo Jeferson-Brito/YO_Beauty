@@ -23,8 +23,8 @@ export function HomePage() {
         <div className="mb-8 flex items-center justify-center gap-6">
           <span className="hidden h-px w-16 bg-blush-200 sm:block" />
           <div className="text-center">
-            <h2 className="script-title text-5xl sm:text-7xl">Categorias</h2>
-            <p className="mt-3 text-[10px] tracking-[0.14em] text-ink-500 uppercase sm:text-[11px] sm:tracking-[0.22em]">Encontre tudo o que você precisa</p>
+            <h2 className="type-title">Categorias</h2>
+            <p className="type-note mt-3">Encontre tudo o que você precisa</p>
           </div>
           <span className="hidden h-px w-16 bg-blush-200 sm:block" />
         </div>
@@ -36,7 +36,7 @@ export function HomePage() {
                   <CategoryRotator category={category} />
                 </div>
               </div>
-              <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-semibold tracking-[0.08em] text-ink-700 uppercase group-hover:text-magenta-600 sm:text-xs sm:tracking-[0.14em]">
+              <span className="type-kicker mt-3 inline-flex items-center gap-1 text-ink-700 group-hover:text-magenta-600">
                 {category.name} <span aria-hidden="true">›</span>
               </span>
             </Link>
@@ -46,7 +46,7 @@ export function HomePage() {
       {featured ? (
         <section className="store-wrap py-10">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
-            <h2 className="script-title text-4xl leading-none sm:text-6xl">{featured.title}</h2>
+            <h2 className="type-section">{featured.title}</h2>
             <span className="mb-3 hidden h-px flex-1 bg-blush-200 sm:block" />
             {featured.buttonUrl ? (
               <Link to={featured.buttonUrl} className="text-link text-xs font-semibold tracking-[0.16em] uppercase sm:mb-2">
@@ -68,7 +68,7 @@ export function HomePage() {
       {blocks.map((section) => (
         <section key={section.id} className="store-wrap py-8">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
-            <h2 className="script-title text-4xl leading-none sm:text-5xl">{section.title}</h2>
+            <h2 className="type-section">{section.title}</h2>
             <span className="mb-3 hidden h-px flex-1 bg-blush-200 sm:block" />
             {section.buttonUrl ? (
               <Link to={section.buttonUrl} className="text-link text-xs font-semibold tracking-[0.16em] uppercase sm:mb-2">
@@ -76,7 +76,7 @@ export function HomePage() {
               </Link>
             ) : null}
           </div>
-          {section.subtitle ? <p className="mb-4 text-sm text-ink-500">{section.subtitle}</p> : null}
+          {section.subtitle ? <p className="type-body mb-4">{section.subtitle}</p> : null}
           {section.products.length === 0 ? (
             <p className="text-sm text-ink-500">Esta seção ainda não tem produtos.</p>
           ) : (
@@ -157,7 +157,7 @@ function Hero({ banner }: { banner?: StoreBanner }) {
             {banner?.eyebrow || 'Beleza, autocuidado e confiança em um só lugar'}
           </p>
           <img src="/brand/logo-horizontal.png" alt="Yo Beauty" className="mt-4 h-auto w-full max-w-[420px] sm:max-w-[520px]" />
-          <p className="mt-2 text-balance font-script text-2xl text-white sm:text-4xl">{banner?.subtitle || 'Mais beleza para o seu dia a dia'} ♥</p>
+          <p className="type-lead mt-2 text-balance text-white">{banner?.subtitle || 'Mais beleza para o seu dia a dia'} ♥</p>
           <Link
             to={banner?.buttonUrl || '/produtos'}
             className="outline-light mt-6 inline-flex w-fit items-center gap-3 rounded-full border border-white/80 px-6 py-2.5 text-xs font-semibold tracking-[0.18em] uppercase"
@@ -188,7 +188,7 @@ function PromoBanner({ banner, align, slug }: { banner: StoreBanner; align: 'lef
       ) : null}
       <div className={`relative z-10 flex flex-col items-center justify-center px-6 py-6 text-center sm:absolute sm:inset-y-0 sm:px-5 ${imageOnRight ? 'sm:left-0 sm:w-[50%]' : 'sm:right-0 sm:w-[54%]'}`}>
         <p className="text-xs font-semibold tracking-[0.16em] uppercase sm:text-base">{banner.eyebrow || banner.title}</p>
-        <p className="script-title mt-1 flex w-full items-center justify-center text-center text-[2.35rem] leading-[1.12] text-balance !text-white sm:min-h-32 sm:text-[2.65rem]">{banner.title}</p>
+        <p className="type-title mt-1 flex w-full items-center justify-center text-center text-[2.35rem] text-balance !text-white sm:min-h-32 sm:text-[2.65rem]">{banner.title}</p>
         {banner.subtitle ? <p className="mt-2 text-sm text-white/85">{banner.subtitle}</p> : null}
         {banner.buttonUrl ? (
           <Link to={banner.buttonUrl} className="outline-light mt-4 inline-flex rounded-full border border-white/85 px-5 py-1.5 text-[11px] font-medium tracking-[0.16em] uppercase sm:mt-3">

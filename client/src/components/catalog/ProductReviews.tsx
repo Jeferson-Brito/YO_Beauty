@@ -127,7 +127,7 @@ export function ProductReviews({ slug }: { slug: string }) {
 
   return (
     <section className="mt-14">
-      <h2 className="script-title text-4xl sm:text-5xl">Avaliações</h2>
+      <h2 className="type-section">Avaliações</h2>
 
       {user?.role === 'CLIENT' ? (
         <form
