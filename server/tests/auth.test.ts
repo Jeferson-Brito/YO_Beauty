@@ -8,7 +8,8 @@ import { createInitialAdmin } from '../src/services/admin-account.service';
 describe('acesso e administrador inicial', () => {
   it('cadastra somente cliente, mesmo se o corpo pedir outro papel', async () => {
     const response = await request(app).post('/api/auth/register').send({
-      name: 'Cliente Teste',
+      firstName: 'Cliente',
+      lastName: 'Teste',
       email: 'cliente.teste@yobeauty.local',
       password: 'Cliente123',
       role: 'ADMIN',

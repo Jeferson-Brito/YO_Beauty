@@ -16,15 +16,22 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Informe a senha.'),
 });
 
-const registerSchema = z.object({
-  name: z.string().trim().min(2, 'Informe o nome.'),
-  email: z.string().trim().email('Informe um e-mail válido.'),
-  password: z
-    .string()
-    .min(8, 'A senha deve ter pelo menos 8 caracteres.')
-    .regex(/[A-Za-z]/, 'Inclua ao menos uma letra.')
-    .regex(/[0-9]/, 'Inclua ao menos um número.'),
-});
+const registerSchema = z
+  .object({
+    email: z.string().trim().email('Informe um e-mail válido.'),
+    emailConfirm: z.string().trim().min(1, 'Confirme o e-mail.'),
+    firstName: z.string().trim().min(2, 'Informe o nome.'),
+    lastName: z.string().trim().min(2, 'Informe o sobrenome.'),
+    password: z
+      .string()
+      .min(8, 'A senha deve ter pelo menos 8 caracteres.')
+      .regex(/[A-Za-z]/, 'Inclua ao menos uma letra.')
+      .regex(/[0-9]/, 'Inclua ao menos um número.'),
+  })
+  .refine((value) => value.email.toLowerCase() === value.emailConfirm.toLowerCase(), {
+    message: 'Os e-mails não coincidem.',
+    path: ['emailConfirm'],
+  });
 
 function nextPath(raw: string | null): string {
   if (raw && raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/admin')) return raw;
@@ -95,12 +102,20 @@ export function RegisterPage() {
   const destination = nextPath(params.get('next'));
   const { refreshUser } = useShop();
   const [error, setError] = useState('');
-  const form = useForm<z.infer<typeof registerSchema>>({ resolver: zodResolver(registerSchema) });
+  const form = useForm<z.input<typeof registerSchema>>({ resolver: zodResolver(registerSchema) });
+  const email = form.watch('email');
+  const emailConfirm = form.watch('emailConfirm');
+  const emailReady = Boolean(email && emailConfirm && email.trim().toLowerCase() === emailConfirm.trim().toLowerCase() && z.string().email().safeParse(email.trim()).success);
 
-  async function submit(values: z.infer<typeof registerSchema>) {
+  async function submit(values: z.input<typeof registerSchema>) {
     setError('');
     try {
-      await apiSend('/api/auth/register', 'POST', values);
+      await apiSend('/api/auth/register', 'POST', {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        email: values.email,
+        password: values.password,
+      });
       await refreshUser();
       track('sign_up', { path: '/cadastro' });
       navigate(destination);
@@ -127,18 +142,28 @@ export function RegisterPage() {
       {error ? <p className="mt-3 text-sm text-magenta-700">{error}</p> : null}
       <p className="my-4 text-center text-xs tracking-wide text-ink-500 uppercase">ou</p>
       <form className="space-y-4" onSubmit={form.handleSubmit(submit)} noValidate>
-        <Field label="Nome" error={form.formState.errors.name?.message}>
-          <input className="field" {...form.register('name')} />
-        </Field>
         <Field label="E-mail" error={form.formState.errors.email?.message}>
-          <input type="email" className="field" {...form.register('email')} />
+          <input type="email" autoComplete="email" className="field" {...form.register('email')} />
         </Field>
-        <Field label="Senha" error={form.formState.errors.password?.message}>
-          <input type="password" className="field" {...form.register('password')} />
+        <Field label="Confirmar e-mail" error={form.formState.errors.emailConfirm?.message}>
+          <input type="email" autoComplete="email" className="field" {...form.register('emailConfirm')} />
         </Field>
-        <button type="submit" className="btn-cart" disabled={form.formState.isSubmitting}>
-          Cadastrar
-        </button>
+        {emailReady ? (
+          <>
+            <Field label="Nome" error={form.formState.errors.firstName?.message}>
+              <input autoComplete="given-name" className="field" {...form.register('firstName')} />
+            </Field>
+            <Field label="Sobrenome" error={form.formState.errors.lastName?.message}>
+              <input autoComplete="family-name" className="field" {...form.register('lastName')} />
+            </Field>
+            <Field label="Senha" error={form.formState.errors.password?.message}>
+              <input type="password" autoComplete="new-password" className="field" {...form.register('password')} />
+            </Field>
+            <button type="submit" className="btn-cart" disabled={form.formState.isSubmitting}>
+              Cadastrar
+            </button>
+          </>
+        ) : null}
       </form>
     </AuthShell>
   );

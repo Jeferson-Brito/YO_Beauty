@@ -18,7 +18,8 @@ describe('painel de catálogo', () => {
 
   beforeAll(async () => {
     await request(app).post('/api/auth/register').send({
-      name: 'Cliente Painel',
+      firstName: 'Cliente',
+      lastName: 'Painel',
       email: 'cliente.painel@yobeauty.local',
       password: 'Cliente123',
     });

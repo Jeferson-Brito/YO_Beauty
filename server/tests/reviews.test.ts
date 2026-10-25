@@ -28,7 +28,8 @@ describe('avaliações de produto', () => {
 
     const agent = request.agent(app);
     const registered = await agent.post('/api/auth/register').send({
-      name: 'Ana Avaliacao',
+      firstName: 'Ana',
+      lastName: 'Avaliacao',
       email,
       password: 'Cliente123',
     });

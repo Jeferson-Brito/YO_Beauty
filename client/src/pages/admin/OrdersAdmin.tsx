@@ -4,6 +4,7 @@ import { ApiError, apiGet, apiSend } from '../../services/api';
 import type { DataResponse, ListResponse } from '../../types/catalog';
 import { formatBRL } from '../../utils/money';
 import { paymentMethodLabel } from '../../utils/order-whatsapp';
+import { printOrder } from '../../utils/print-order';
 import { LineThumb } from '../../components/catalog/LineThumb';
 import { Notice, PageHeader } from './ui';
 
@@ -14,10 +15,13 @@ type AdminOrder = {
   customerEmail: string;
   customerPhone: string;
   totalCents: number;
+  subtotalCents?: number;
+  shippingCostCents?: number;
+  discountAmountCents?: number;
   paymentStatus: string;
   orderStatus: string;
   createdAt: string;
-  address: { street?: string; number?: string; neighborhood?: string; city?: string; state?: string; postalCode?: string };
+  address: { street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; postalCode?: string };
   items: { id: string; name: string; sku: string; quantity: number; lineTotalCents: number; imageUrl?: string | null; categorySlug?: string; slug?: string }[];
   payment?: { provider?: string | null; status?: string | null } | null;
 };
@@ -70,7 +74,7 @@ export function OrdersPage() {
 
   return (
     <div>
-      <PageHeader title="Pedidos" hint="Clique em um pedido para ver o endereço e os itens. Só um pedido ainda sem pagamento pode ser cancelado." />
+      <PageHeader title="Pedidos" hint="Clique em um pedido para ver o endereço, imprimir na MPT-2 ou cancelar um pedido ainda sem pagamento." />
       {orders.isError ? <Notice>Não foi possível carregar os pedidos.</Notice> : null}
       <div className="space-y-3">
         {list.map((item) => {
@@ -117,6 +121,17 @@ export function OrdersPage() {
                         </p>
                         <p className="mt-3 text-ink-500">Pagamento: {paymentMethodLabel(order.payment?.provider) || 'ainda não informado'}</p>
                         <p className="text-ink-500">Situação: {orderLabel[order.orderStatus] ?? order.orderStatus}</p>
+                        <button
+                          type="button"
+                          className="btn-cart mt-4"
+                          onClick={() => {
+                            const opened = printOrder(order);
+                            if (!opened) setError('O navegador bloqueou a impressão. Permita janelas deste site e tente de novo.');
+                          }}
+                        >
+                          Imprimir pedido
+                        </button>
+                        <p className="mt-2 text-xs text-ink-500">Na janela do Windows, escolha a MobilePrinter MPT-2. O papel é de 58 mm.</p>
                         {order.paymentStatus === 'PENDING' ? (
                           <button type="button" className="mt-4 text-sm text-magenta-700" onClick={() => void cancel(order.id)}>
                             Cancelar e devolver o estoque

@@ -5,16 +5,26 @@ const passwordRules = {
   number: /[0-9]/,
 } as const;
 
-export const registerSchema = z.object({
-  name: z.string().trim().min(2, 'Informe o nome.').max(80),
-  email: z.string().trim().email('Informe um e-mail válido.').transform((value) => value.toLowerCase()),
-  password: z
-    .string()
-    .min(8, 'A senha deve ter pelo menos 8 caracteres.')
-    .max(72, 'A senha deve ter no máximo 72 caracteres.')
-    .regex(passwordRules.letter, 'A senha deve conter ao menos uma letra.')
-    .regex(passwordRules.number, 'A senha deve conter ao menos um número.'),
-});
+const givenName = z.string().trim().min(2, 'Informe o nome.').max(40);
+const familyName = z.string().trim().min(2, 'Informe o sobrenome.').max(60);
+
+export const registerSchema = z
+  .object({
+    firstName: givenName,
+    lastName: familyName,
+    email: z.string().trim().email('Informe um e-mail válido.').transform((value) => value.toLowerCase()),
+    password: z
+      .string()
+      .min(8, 'A senha deve ter pelo menos 8 caracteres.')
+      .max(72, 'A senha deve ter no máximo 72 caracteres.')
+      .regex(passwordRules.letter, 'A senha deve conter ao menos uma letra.')
+      .regex(passwordRules.number, 'A senha deve conter ao menos um número.'),
+  })
+  .transform((value) => ({
+    name: `${value.firstName} ${value.lastName}`,
+    email: value.email,
+    password: value.password,
+  }));
 
 export const loginSchema = z.object({
   email: z.string().trim().email('Informe um e-mail válido.').transform((value) => value.toLowerCase()),

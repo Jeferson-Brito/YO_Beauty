@@ -30,7 +30,8 @@ describe('dashboard comercial', () => {
   it('não trata pedido pendente como faturamento e exporta o período', async () => {
     const gloss = await prisma.product.findUniqueOrThrow({ where: { slug: 'gloss-labial-brilho-intenso' } });
     await buyer.post('/api/auth/register').send({
-      name: 'Cliente Indicador',
+      firstName: 'Cliente',
+      lastName: 'Indicador',
       email: 'dashboard.teste@yobeauty.local',
       password: 'Cliente123',
     });

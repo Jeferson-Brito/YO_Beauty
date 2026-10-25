@@ -57,13 +57,15 @@ describe('carrinho e pedido pendente', () => {
     expect(anonymous.status).toBe(401);
 
     const registered = await buyer.post('/api/auth/register').send({
-      name: 'Cliente Pedido',
+      firstName: 'Cliente',
+      lastName: 'Pedido',
       email: 'pedido.teste@yobeauty.local',
       password: 'Cliente123',
     });
     expect(registered.status).toBe(201);
     await other.post('/api/auth/register').send({
-      name: 'Outro Cliente',
+      firstName: 'Outro',
+      lastName: 'Cliente',
       email: 'outro.pedido@yobeauty.local',
       password: 'Cliente123',
     });
