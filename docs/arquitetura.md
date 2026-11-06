@@ -19,13 +19,13 @@ A paleta é magenta, rosa-claro, branco e dourado. A logo oficial já está em `
 ## Decisões
 
 - Monorepo npm com `client/` e `server/`. O navegador fala com `/api`, e o Vite encaminha para a porta 3333. O cookie de sessão fica no mesmo site durante o desenvolvimento.
-- Preços em centavos inteiros. SQLite não oferece decimal confiável, e o mesmo inteiro segue para o PostgreSQL sem conversão ambígua.
+- Preços em centavos inteiros, evitando arredondamentos de ponto flutuante no JavaScript.
 - A categoria principal do produto não é uma coluna única. A associação é de muitos para muitos, com uma categoria marcada como principal, porque um item pode estar em Maquiagem e também em Kits ou Lançamentos.
 - Autenticação própria. A senha fica com bcrypt. A sessão é um token aleatório; o banco guarda só o SHA-256. O cookie `yb_session` é `httpOnly`, `SameSite=Lax` e `Secure` em produção.
 - O cadastro público grava somente `CLIENT`. O administrador nasce pelo comando `npm run admin:create`. Um cliente existente não é promovido.
 - Pedido pendente não é venda. O faturamento usa a data `paidAt` do pagamento confirmado. A regra está em código e em [métricas comerciais](metricas-comerciais.md).
-- Analytics fica desligado (`analyticsEnabled = false`) até a etapa própria, com consentimento. O modelo das tabelas já existe.
-- Imagens locais passam pela interface `StorageProvider`. Nesta etapa não há rota de upload. A troca futura para Supabase Storage não muda o restante da loja.
+- Analytics é configurável e só registra visitas após consentimento explícito.
+- Uploads passam pela interface `StorageProvider` e são persistidos na tabela `StoredImage` do PostgreSQL. A URL `/uploads` permanece estável entre deploys.
 - Fuso comercial inicial: `America/Recife`. Os instantes são gravados em UTC e os limites dos períodos são calculados nesse fuso.
 
 ## Pastas
@@ -75,7 +75,7 @@ Administração, somente com sessão de `ADMIN`:
 - Pedidos da loja em `/api/admin/orders`
 - Indicadores em `GET /api/admin/dashboard` e CSV em `GET /api/admin/dashboard.csv`
 
-As imagens enviadas ficam em `server/uploads` e são servidas em `/uploads`. O painel da loja fica em `/admin`.
+As imagens enviadas ficam no banco e são servidas em `/uploads`. Arquivos antigos em `server/uploads` têm apenas fallback de leitura. O painel da loja fica em `/admin`.
 
 Pedidos e visitas:
 
@@ -83,9 +83,9 @@ Pedidos e visitas:
 - `POST /api/orders` e `GET /api/orders` exigem sessão
 - `POST /api/analytics/consent` e `POST /api/analytics/events` exigem consentimento e não aceitam compra vinda do navegador
 
-O carrinho do visitante fica no navegador. O pedido só é gravado depois do login, com preço e estoque conferidos no servidor, e nasce aguardando pagamento. Nenhuma cobrança é processada.
+Carrinho e favoritos ficam no navegador. Adicionar ao carrinho exige login e guarda a intenção até a autenticação. O pedido é gravado com preço e estoque conferidos no servidor, e nasce aguardando pagamento. Nenhuma cobrança é processada.
 
-A resposta pública de produto não expõe a quantidade exata em estoque. Informa `in_stock`, `low_stock` ou `out_of_stock`.
+O card público informa `in_stock`, `low_stock` ou `out_of_stock`. O detalhe e a cotação retornam a quantidade disponível para limitar os seletores do carrinho.
 
 ## Plano
 

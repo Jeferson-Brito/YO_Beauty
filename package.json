@@ -11,6 +11,7 @@
     "server"
   ],
   "scripts": {
+    "dev:local": "node scripts/dev-local.mjs",
     "dev": "concurrently -n api,web -c magenta,blue \"npm run dev -w server\" \"npm run dev -w client\"",
     "dev:server": "npm run dev -w server",
     "dev:client": "npm run dev -w client",

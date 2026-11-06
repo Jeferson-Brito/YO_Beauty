@@ -364,6 +364,14 @@ export const orderService = {
     }
 
     const updated = await prisma.$transaction(async (tx) => {
+      // Apenas uma transação pode assumir o cancelamento e devolver o estoque.
+      const claimed = await tx.order.updateMany({
+        where: { id, paymentStatus: 'PENDING', orderStatus: { not: 'CANCELLED' } },
+        data: { orderStatus: 'CANCELLED', paymentStatus: 'CANCELLED' },
+      });
+      if (claimed.count !== 1) {
+        throw new AppError(409, 'O pedido já foi cancelado ou teve o pagamento atualizado.', 'ORDER_CHANGED');
+      }
       for (const item of existing.items) {
         if (!item.productId) continue;
         await tx.product.updateMany({

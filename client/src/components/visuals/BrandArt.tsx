@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 type ArtProps = {
   slug?: string;
   label: string;
@@ -21,8 +23,9 @@ const scenes: Record<string, { a: string; b: string; shape: 'palette' | 'bottles
 };
 
 export function BrandArt({ slug, label, imageUrl, alt, className = '', fit = 'cover' }: ArtProps) {
-  if (imageUrl) {
-    return <img src={imageUrl} alt={alt || label} className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} ${className}`} />;
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  if (imageUrl && failedUrl !== imageUrl) {
+    return <img src={imageUrl} alt={alt ?? label} loading="lazy" decoding="async" onError={() => setFailedUrl(imageUrl)} className={`h-full w-full ${fit === 'contain' ? 'object-contain' : 'object-cover'} ${className}`} />;
   }
 
   const scene = scenes[slug ?? ''] ?? { a: '#f8d0e0', b: '#e21870', shape: 'spark' as const };

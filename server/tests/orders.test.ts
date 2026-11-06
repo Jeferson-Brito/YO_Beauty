@@ -123,7 +123,12 @@ describe('carrinho e pedido pendente', () => {
       email: 'pedido.admin@yobeauty.local',
       password: 'AdminYo1234',
     });
-    const cancelled = await admin.post(`/api/admin/orders/${created.body.data.id}/cancel`);
+    const cancellations = await Promise.all([
+      admin.post(`/api/admin/orders/${created.body.data.id}/cancel`),
+      admin.post(`/api/admin/orders/${created.body.data.id}/cancel`),
+    ]);
+    expect(cancellations.map(result => result.status).sort()).toEqual([200, 409]);
+    const cancelled = cancellations.find(result => result.status === 200)!;
     expect(cancelled.status).toBe(200);
     expect(cancelled.body.data.orderStatus).toBe('CANCELLED');
     expect((await prisma.product.findUniqueOrThrow({ where: { id: gloss.id } })).stockQuantity).toBe(40);

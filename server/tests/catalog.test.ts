@@ -67,6 +67,10 @@ describe('catálogo público', () => {
     const secondPage = await request(app).get('/api/products?page=2&pageSize=10');
     expect(secondPage.body.data).toHaveLength(4);
 
+    const favorites = await request(app).get(`/api/products?ids=${secondPage.body.data.map((product: { id: string }) => product.id).join(',')}&pageSize=48`);
+    expect(favorites.body.data).toHaveLength(4);
+    expect(new Set(favorites.body.data.map((product: { id: string }) => product.id))).toEqual(new Set(secondPage.body.data.map((product: { id: string }) => product.id)));
+
     const search = await request(app).get('/api/products?q=Máscara');
     expect(search.body.meta.total).toBe(2);
 

@@ -4,7 +4,7 @@ import { prisma } from '../config/prisma';
 import { effectivePriceCents } from '../domain/pricing';
 import { AppError } from '../lib/errors';
 import { pageMeta, pageWindow } from '../schemas/catalog.schema';
-import { localDiskStorage } from '../storage/local-disk-storage';
+import { databaseStorage } from '../storage/database-storage';
 import { contentTypeOf, detectImage, imageKey, type ImageExtension } from '../utils/images';
 import { normalizeSearch } from '../utils/search';
 import { slugify } from '../utils/slug';
@@ -157,7 +157,7 @@ async function saveImage(folder: string, data: Buffer) {
   if (!extension) {
     throw new AppError(422, 'Envie uma imagem JPG, PNG, WEBP ou GIF.', 'INVALID_IMAGE');
   }
-  return localDiskStorage.save({
+  return databaseStorage.save({
     key: imageKey(folder, extension),
     contentType: contentTypeOf(extension as ImageExtension),
     data,
@@ -166,7 +166,7 @@ async function saveImage(folder: string, data: Buffer) {
 
 async function removeStored(url: string | null | undefined) {
   if (!url?.startsWith('/uploads/')) return;
-  await localDiskStorage.delete(decodeURIComponent(url.slice('/uploads/'.length)));
+  await databaseStorage.delete(decodeURIComponent(url.slice('/uploads/'.length)));
 }
 
 async function requireSettings() {
@@ -757,6 +757,7 @@ export const adminCatalogService = {
       paymentMethods: settings.paymentMethods,
       benefits: settings.benefits,
       lowStockThreshold: settings.lowStockThreshold,
+      autoPrintOrders: settings.autoPrintOrders,
     };
   },
 
@@ -777,6 +778,7 @@ export const adminCatalogService = {
     paymentMethods: { cash: boolean; pix: boolean; creditCard: boolean; debitCard: boolean };
     benefits: { icon?: string; title: string; description?: string }[];
     lowStockThreshold: number;
+    autoPrintOrders: boolean;
   }) {
     await requireSettings();
     await prisma.storeSettings.update({
@@ -798,6 +800,7 @@ export const adminCatalogService = {
         paymentMethods: input.paymentMethods,
         benefits: input.benefits,
         lowStockThreshold: input.lowStockThreshold,
+        autoPrintOrders: input.autoPrintOrders,
       },
     });
     return this.settings();

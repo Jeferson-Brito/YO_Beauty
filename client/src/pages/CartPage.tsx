@@ -9,6 +9,7 @@ import { useHome, useShop } from '../context/ShopContext';
 import { apiGet, apiSend } from '../services/api';
 import type { DataResponse, ListResponse, ProductCard as Product } from '../types/catalog';
 import { formatBRL } from '../utils/money';
+import { readPage } from '../components/catalog/Pagination';
 
 type QuoteLine = {
   productId: string;
@@ -201,11 +202,19 @@ function uniqueSuggestions(sections: { products: Product[] }[]) {
 export function FavoritesPage() {
   const { favorites } = useShop();
   const [params, setParams] = useSearchParams();
+  const page = readPage(params.get('page'));
   const category = params.get('category') ?? '';
   const sort = readProductSort(params.get('sort'));
   const products = useQuery({
-    queryKey: ['products', 'all-for-favorites'],
-    queryFn: () => apiGet<ListResponse<Product>>('/api/products?pageSize=48&sort=name'),
+    queryKey: ['products', 'favorites', favorites],
+    queryFn: async () => {
+      const batches = [];
+      for (let index = 0; index < favorites.length; index += 48) {
+        const ids = encodeURIComponent(favorites.slice(index, index + 48).join(','));
+        batches.push(apiGet<ListResponse<Product>>(`/api/products?pageSize=48&sort=name&ids=${ids}`));
+      }
+      return { data: (await Promise.all(batches)).flatMap(result => result.data) };
+    },
     enabled: favorites.length > 0,
   });
   const saved = (products.data?.data.filter((product) => favorites.includes(product.id)) ?? []).filter((product) => !category || product.categories.some((item) => item.slug === category));
@@ -218,6 +227,7 @@ export function FavoritesPage() {
 
   function update(next: { category?: string; sort?: ProductSort }) {
     const updated = new URLSearchParams(params);
+    updated.delete('page');
     if (next.category !== undefined) {
       if (next.category) updated.set('category', next.category);
       else updated.delete('category');
@@ -246,7 +256,11 @@ export function FavoritesPage() {
       onSort={(next) => update({ sort: next })}
       activeCategory={category}
       onCategory={(slug) => update({ category: slug })}
-      products={products.data ? ordered : undefined}
+      products={products.data ? ordered.slice((page - 1) * 24, page * 24) : undefined}
+      page={page}
+      pageCount={Math.ceil(ordered.length / 24)}
+      onPage={(next) => { const updated = new URLSearchParams(params); updated.set('page', String(next)); setParams(updated); }}
+      error={products.isError}
       empty="Nenhum favorito nessa categoria."
     />
   );

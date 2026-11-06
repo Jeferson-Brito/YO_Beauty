@@ -158,6 +158,14 @@ model ProductCategory {
   @@index([categoryId, isPrimary])
 }
 
+// Os arquivos acompanham os dados persistentes, nunca o disco temporário do deploy.
+model StoredImage {
+  key         String   @id
+  contentType String
+  data        Bytes
+  createdAt   DateTime @default(now())
+}
+
 model ProductImage {
   id        String  @id @default(cuid())
   productId String
@@ -284,6 +292,7 @@ model StoreSettings {
   analyticsRequiresConsent   Boolean  @default(true)
   analyticsRetentionDays     Int      @default(180)
   sessionTimeoutMinutes      Int      @default(30)
+  autoPrintOrders            Boolean  @default(false)
   createdAt                  DateTime @default(now())
   updatedAt                  DateTime @updatedAt
 }

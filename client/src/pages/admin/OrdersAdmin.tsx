@@ -1,3 +1,4 @@
+import { Pagination } from '../../components/catalog/Pagination';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ApiError, apiGet, apiSend } from '../../services/api';
@@ -46,11 +47,12 @@ const orderLabel: Record<string, string> = {
 
 export function OrdersPage() {
   const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState('');
   const orders = useQuery({
-    queryKey: ['admin', 'orders'],
-    queryFn: () => apiGet<ListResponse<AdminOrder>>('/api/admin/orders'),
+    queryKey: ['admin', 'orders', page],
+    queryFn: () => apiGet<ListResponse<AdminOrder>>(`/api/admin/orders?page=${page}`),
   });
   const detail = useQuery({
     queryKey: ['admin', 'order', selected],
@@ -148,6 +150,7 @@ export function OrdersPage() {
         })}
         {orders.data && list.length === 0 ? <p className="text-sm text-ink-500">Nenhum pedido ainda.</p> : null}
       </div>
+      <Pagination page={page} pageCount={orders.data?.meta?.pageCount ?? 1} onPage={setPage} />
     </div>
   );
 }

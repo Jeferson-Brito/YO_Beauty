@@ -123,4 +123,5 @@ export type AdminSettings = {
   paymentMethods: { cash?: boolean; pix?: boolean; creditCard?: boolean; debitCard?: boolean };
   benefits: { icon?: string; title: string; description?: string }[];
   lowStockThreshold: number;
+  autoPrintOrders: boolean;
 };

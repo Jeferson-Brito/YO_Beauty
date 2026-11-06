@@ -345,6 +345,7 @@ async function ensureSettings() {
     analyticsRequiresConsent: true,
     analyticsRetentionDays: 180,
     sessionTimeoutMinutes: 30,
+    autoPrintOrders: false,
   };
 
   return prisma.storeSettings.create({ data });

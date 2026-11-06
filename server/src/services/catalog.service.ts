@@ -46,6 +46,7 @@ export const catalogService = {
     const threshold = await lowStockThreshold();
     const result = await productRepository.list({
       ...window,
+      productIds: query.ids,
       searchText: query.q ? normalizeSearch(query.q) : undefined,
       categorySlug: query.category,
       inStock: query.availability === 'in_stock',

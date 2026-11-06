@@ -1,6 +1,7 @@
 import { useHome } from '../../context/ShopContext';
 import type { ProductCard as Product } from '../../types/catalog';
 import { ProductCard } from './ProductCard';
+import { Pagination } from './Pagination';
 
 export const productSorts = [
   { id: 'name', label: 'Nome' },
@@ -25,6 +26,10 @@ export function ProductListing({
   onCategory,
   products,
   empty,
+  page = 1,
+  pageCount = 1,
+  onPage,
+  error,
 }: {
   title: string;
   description?: string;
@@ -35,6 +40,10 @@ export function ProductListing({
   onCategory: (slug: string) => void;
   products: Product[] | undefined;
   empty: string;
+  page?: number;
+  pageCount?: number;
+  onPage?: (page: number) => void;
+  error?: boolean;
 }) {
   const home = useHome();
   const categories = (home.data?.data.homeCategories ?? []).filter((item) => item.slug !== 'lancamentos' && item.slug !== 'promocoes');
@@ -71,12 +80,14 @@ export function ProductListing({
           </button>
         ))}
       </div>
-      <div className="mt-6 grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      {error ? <p role="alert" className="mt-6 text-sm text-magenta-700">Não foi possível carregar os produtos. Tente atualizar a página.</p> : null}
+      <div className="product-grid mt-6 grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {products?.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
       {products && products.length === 0 ? <p className="mt-8 text-ink-500">{empty}</p> : null}
+      {onPage ? <Pagination page={page} pageCount={pageCount} onPage={onPage} /> : null}
     </main>
   );
 }

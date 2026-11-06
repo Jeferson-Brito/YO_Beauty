@@ -7,6 +7,7 @@ import { env } from './config/env';
 import { errorHandler } from './middlewares/error-handler';
 import { notFound } from './middlewares/not-found';
 import { apiRouter } from './routes';
+import { imageRoutes } from './routes/image.routes';
 
 export const app = express();
 
@@ -32,7 +33,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://accounts.google.com'],
         fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
         imgSrc: ["'self'", 'data:', 'blob:'],
-        connectSrc: ["'self'", 'https://accounts.google.com'],
+        connectSrc: ["'self'", 'https://accounts.google.com', 'https://viacep.com.br'],
         upgradeInsecureRequests: env.NODE_ENV === 'production' ? [] : null,
       },
     },
@@ -47,6 +48,7 @@ app.use(
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use('/api', apiRouter);
+app.use('/uploads', imageRoutes);
 app.use(
   '/uploads',
   express.static(path.resolve(__dirname, '../uploads'), {

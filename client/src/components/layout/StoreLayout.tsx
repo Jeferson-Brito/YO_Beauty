@@ -9,9 +9,13 @@ import { apiGet } from '../../services/api';
 import type { ListResponse, ProductCard, StoreSettings } from '../../types/catalog';
 import { formatBRL, whatsappHref } from '../../utils/money';
 import { enabledPaymentMethods } from '../../utils/order-whatsapp';
+import { useScrollReveal } from '../visuals/useScrollReveal';
 export function StoreLayout() {
   const home = useHome();
   const location = useLocation();
+  const contentRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(contentRef, `${location.pathname}:${home.isLoading}`);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [location.pathname, location.search]);
   const [reviewingConsent, setReviewingConsent] = useState(false);
   const [consentVersion, setConsentVersion] = useState(0);
   const loadedStore = home.data?.data.store;
@@ -31,7 +35,7 @@ export function StoreLayout() {
   if (home.isError || !home.data) {
     return (
       <div className="grid min-h-screen place-items-center px-6 text-center">
-        <p>Não foi possível carregar a loja. Verifique se a API está em execução.</p>
+        <div><p>Não foi possível carregar a loja agora.</p><button type="button" className="page-button mt-4" onClick={() => void home.refetch()}>Tentar novamente</button></div>
       </div>
     );
   }
@@ -42,7 +46,7 @@ export function StoreLayout() {
       <div className="sticky top-0 z-30 shadow-sm" style={{ overflowAnchor: 'none' }}>
         <SiteHeader categories={menuCategories} />
       </div>
-      <div className="flex-1">
+      <div ref={contentRef} key={location.pathname} className="page-enter flex-1">
         <Outlet />
       </div>
       <SiteFooter store={store} onReviewConsent={() => setReviewingConsent(true)} />
@@ -146,9 +150,9 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
   const waiting = query.length > 0 && (query !== debounced || suggestions.isFetching);
 
   return (
-    <header ref={headerRef} className="bg-header">
+    <header ref={headerRef} className="store-header bg-header">
       <div className={`store-wrap grid grid-cols-[auto_1fr_auto] items-center lg:grid-cols-[1fr_auto_1fr] ${compact ? 'gap-3 py-2' : 'gap-4 py-4'}`}>
-        <button type="button" className="text-ink-700 transition hover:text-magenta-600 lg:hidden" aria-label="Abrir menu" onClick={() => setOpen(true)}>
+        <button type="button" className="grid h-11 w-11 place-items-center text-ink-700 transition hover:text-magenta-600 lg:hidden" aria-label="Abrir menu" aria-expanded={open} onClick={() => setOpen(true)}>
           <Menu />
         </button>
         <form ref={formRef} onSubmit={search} className={`relative col-span-3 lg:col-span-1 lg:col-start-1 ${suggestOpen ? 'z-20' : ''}`}>
@@ -239,11 +243,11 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
           Início
         </NavLink>
         <div className="group relative flex">
-          <span className="nav-link inline-flex h-5 items-center gap-1 leading-none group-hover:text-magenta-600" aria-haspopup="true" aria-current={onCategoryPage ? 'page' : undefined}>
+          <button type="button" className="nav-link inline-flex h-5 items-center gap-1 leading-none group-hover:text-magenta-600" aria-haspopup="true" aria-current={onCategoryPage ? 'page' : undefined}>
             <span className="underline-offset-[6px] group-hover:underline">Categorias</span>
             <ChevronDown size={14} strokeWidth={2.25} aria-hidden className="transition-transform duration-200 group-hover:rotate-180" />
-          </span>
-          <div className="pointer-events-none invisible absolute top-full left-1/2 z-40 w-56 -translate-x-1/2 pt-3 group-hover:pointer-events-auto group-hover:visible">
+          </button>
+          <div className="pointer-events-none invisible absolute top-full left-1/2 z-40 w-56 -translate-x-1/2 pt-3 group-hover:pointer-events-auto group-hover:visible group-focus-within:pointer-events-auto group-focus-within:visible">
             <ul className="overflow-hidden rounded-2xl bg-white py-1 shadow-lg ring-1 ring-blush-100">
               {categoryLinks.map((category) => (
                 <li key={category.slug}>
@@ -271,7 +275,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
       </nav>
       {open ? (
         <div className="fixed inset-0 z-40 bg-ink-900/40 lg:hidden" onClick={() => setOpen(false)}>
-          <div className="h-full w-72 bg-header p-6" onClick={(event) => event.stopPropagation()}>
+          <div className="menu-enter h-full w-[min(320px,88vw)] overflow-y-auto bg-header p-6" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="transition hover:text-magenta-600" aria-label="Fechar menu" onClick={() => setOpen(false)}>
               <X />
             </button>
@@ -320,7 +324,7 @@ function SiteFooter({ store, onReviewConsent }: { store: StoreSettings; onReview
   const payments = enabledPaymentMethods(store.paymentMethods);
 
   return (
-    <footer className="mt-8 bg-magenta-600 text-white">
+    <footer className="store-footer mt-16 bg-magenta-600 text-white">
       <div className="store-wrap grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-4">
         <div>
           <img src="/brand/logo-horizontal-branco.png" alt="Yo Beauty" className="h-auto w-full max-w-[240px]" />

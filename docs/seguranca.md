@@ -21,5 +21,5 @@ Revisão da versão local, antes da integração de pagamento.
 ## O que continua de fora
 
 - Não há cobrança nem armazenamento de cartão. O pedido nasce pendente.
-- A publicação em PostgreSQL ainda não foi executada. O arquivo SQLite local não deve ser o banco da loja aberta.
+- O banco de produção é PostgreSQL. Fotos enviadas são persistidas nesse banco; desenvolvimento e testes usam bancos locais isolados.
 - O texto de privacidade é a base operacional e deve ser revisado pela proprietária antes de uma campanha pública.

@@ -18,6 +18,7 @@ export type ProductListFilters = {
   skip: number;
   take: number;
   searchText?: string;
+  productIds?: string[];
   categorySlug?: string;
   featured?: boolean;
   isNewArrival?: boolean;
@@ -42,6 +43,7 @@ function orderBy(sort: ProductListFilters['sort']): Prisma.ProductOrderByWithRel
 function whereFrom(filters: Omit<ProductListFilters, 'skip' | 'take' | 'sort'>): Prisma.ProductWhereInput {
   return {
     status: 'ACTIVE',
+    ...(filters.productIds ? { id: { in: filters.productIds } } : {}),
     ...(filters.searchText ? { searchText: { contains: filters.searchText } } : {}),
     ...(filters.categorySlug
       ? { categories: { some: { category: { slug: filters.categorySlug, active: true } } } }

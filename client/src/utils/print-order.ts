@@ -57,10 +57,7 @@ function line(label: string, value: string) {
   return `<div class="row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
 }
 
-export function printOrder(order: PrintableOrder) {
-  const popup = window.open('', 'yo-beauty-receipt', 'popup,width=420,height=720');
-  if (!popup) return false;
-
+function receiptHtml(order: PrintableOrder) {
   const when = new Date(order.createdAt).toLocaleString('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -80,8 +77,7 @@ export function printOrder(order: PrintableOrder) {
   const freight = (order.shippingCostCents ?? 0) > 0 ? formatBRL(order.shippingCostCents ?? 0) : 'Grátis';
   const discount = (order.discountAmountCents ?? 0) > 0 ? line('Desconto', formatBRL(order.discountAmountCents ?? 0)) : '';
 
-  popup.document.open();
-  popup.document.write(`<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -130,11 +126,20 @@ export function printOrder(order: PrintableOrder) {
   <div class="rule"></div>
   <p class="center">Obrigada pela compra</p>
 </body>
-</html>`);
-  popup.document.close();
+</html>`;
+}
+
+export function writeReceipt(target: Document, order: PrintableOrder) {
+  target.open();
+  target.write(receiptHtml(order));
+  target.close();
+}
+
+export function printOrder(order: PrintableOrder) {
+  const popup = window.open('', 'yo-beauty-receipt', 'popup,width=420,height=720');
+  if (!popup) return false;
+  writeReceipt(popup.document, order);
   popup.focus();
-  window.setTimeout(() => {
-    popup.print();
-  }, 250);
+  window.setTimeout(() => popup.print(), 250);
   return true;
 }

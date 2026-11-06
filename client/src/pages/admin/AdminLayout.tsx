@@ -1,6 +1,7 @@
 import { BarChart3, ClipboardList, ImageIcon, LayoutGrid, LogOut, Menu, MessageCircle, Package, Settings, Store, Tags, X } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { NavLink, Navigate, Outlet, useNavigate } from 'react-router-dom';
+import { AutoPrintOrders } from '../../components/admin/AutoPrintOrders';
 import { useShop } from '../../context/ShopContext';
 import { ApiError, apiSend } from '../../services/api';
 import type { DataResponse, SessionUser } from '../../types/catalog';
@@ -143,6 +144,7 @@ export function AdminLayout() {
             </div>
           </header>
           <main className="mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+            <AutoPrintOrders />
             <Outlet />
           </main>
         </div>

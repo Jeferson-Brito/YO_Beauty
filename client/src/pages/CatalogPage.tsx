@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { readPage } from '../components/catalog/Pagination';
 import { Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -20,13 +21,14 @@ function writeSort(params: URLSearchParams, sort: ProductSort) {
 
 export function CatalogPage() {
   const [params, setParams] = useSearchParams();
+  const page = readPage(params.get('page'));
   const term = params.get('q') ?? '';
   const category = params.get('category') ?? '';
   const sort = readProductSort(params.get('sort'));
   const products = useQuery({
-    queryKey: ['products', term, category, sort],
+    queryKey: ['products', term, category, sort, page],
     queryFn: () => {
-      const search = new URLSearchParams({ pageSize: '48', sort });
+      const search = new URLSearchParams({ pageSize: '24', page: String(page), sort });
       if (term) search.set('q', term);
       if (category) search.set('category', category);
       return apiGet<ListResponse<Product>>(`/api/products?${search}`);
@@ -39,6 +41,7 @@ export function CatalogPage() {
 
   function update(next: { category?: string; sort?: ProductSort }) {
     const updated = new URLSearchParams(params);
+    updated.delete('page');
     if (next.category !== undefined) {
       if (next.category) updated.set('category', next.category);
       else updated.delete('category');
@@ -56,6 +59,10 @@ export function CatalogPage() {
       activeCategory={category}
       onCategory={(slug) => update({ category: slug })}
       products={products.data?.data}
+      page={page}
+      pageCount={products.data?.meta?.pageCount ?? 1}
+      onPage={(next) => { const updated = new URLSearchParams(params); updated.set('page', String(next)); setParams(updated); }}
+      error={products.isError}
       empty="Nenhum produto encontrado."
     />
   );
@@ -63,12 +70,13 @@ export function CatalogPage() {
 
 export function ShelfPage({ title, description, collection }: { title: string; description: string; collection: 'new' | 'sale' }) {
   const [params, setParams] = useSearchParams();
+  const page = readPage(params.get('page'));
   const category = params.get('category') ?? '';
   const sort = readProductSort(params.get('sort') ?? 'recent');
   const products = useQuery({
-    queryKey: ['products', collection, category, sort],
+    queryKey: ['products', collection, category, sort, page],
     queryFn: () => {
-      const search = new URLSearchParams({ pageSize: '48', sort, collection });
+      const search = new URLSearchParams({ pageSize: '24', page: String(page), sort, collection });
       if (category) search.set('category', category);
       return apiGet<ListResponse<Product>>(`/api/products?${search}`);
     },
@@ -77,6 +85,7 @@ export function ShelfPage({ title, description, collection }: { title: string; d
 
   function update(next: { category?: string; sort?: ProductSort }) {
     const updated = new URLSearchParams(params);
+    updated.delete('page');
     if (next.category !== undefined) {
       if (next.category) updated.set('category', next.category);
       else updated.delete('category');
@@ -95,6 +104,10 @@ export function ShelfPage({ title, description, collection }: { title: string; d
       activeCategory={category}
       onCategory={(slug) => update({ category: slug })}
       products={products.data?.data}
+      page={page}
+      pageCount={products.data?.meta?.pageCount ?? 1}
+      onPage={(next) => { const updated = new URLSearchParams(params); updated.set('page', String(next)); setParams(updated); }}
+      error={products.isError}
       empty={empty}
     />
   );
@@ -104,10 +117,11 @@ export function CategoryPage() {
   const slug = usePathSlug();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
+  const page = readPage(params.get('page'));
   const sort = readProductSort(params.get('sort'));
   const category = useQuery({
-    queryKey: ['category', slug, sort],
-    queryFn: () => apiGet<{ data: CategoryDetail }>(`/api/categories/${slug}?pageSize=48&sort=${sort}`),
+    queryKey: ['category', slug, sort, page],
+    queryFn: () => apiGet<{ data: CategoryDetail }>(`/api/categories/${slug}?pageSize=24&page=${page}&sort=${sort}`),
     enabled: Boolean(slug),
   });
   const payload = category.data?.data;
@@ -133,6 +147,7 @@ export function CategoryPage() {
       sort={sort}
       onSort={(next) => {
         const updated = new URLSearchParams(params);
+        updated.delete('page');
         writeSort(updated, next);
         setParams(updated, { replace: true });
       }}
@@ -142,6 +157,9 @@ export function CategoryPage() {
         navigate(next ? `/categoria/${next}${search}` : `/produtos${search}`);
       }}
       products={payload?.products.data}
+      page={page}
+      pageCount={payload?.products.meta?.pageCount ?? 1}
+      onPage={(next) => { const updated = new URLSearchParams(params); updated.set('page', String(next)); setParams(updated); }}
       empty="Esta categoria ainda não tem produtos ativos."
     />
   );
@@ -238,7 +256,7 @@ export function ProductPage() {
           <div className="mx-auto w-full max-w-md overflow-hidden rounded-[28px] border border-blush-200 bg-blush-50 lg:max-w-none">
             <div className="aspect-square">
               {activePhoto ? (
-                <img src={activePhoto.imageUrl} alt={activePhoto.altText || item.name} className="h-full w-full object-contain" />
+                <BrandArt slug={category?.slug} label={item.name} imageUrl={activePhoto.imageUrl} alt={activePhoto.altText || item.name} fit="contain" />
               ) : (
                 <BrandArt slug={category?.slug} label={item.name} alt={item.name} />
               )}
@@ -255,7 +273,7 @@ export function ProductPage() {
                   onClick={() => setPhotoIndex(index)}
                   className={`h-16 w-16 shrink-0 overflow-hidden rounded-2xl border bg-blush-50 transition hover:border-magenta-400 ${index === photoIndex ? 'border-magenta-600' : 'border-blush-200'}`}
                 >
-                  <img src={photo.imageUrl} alt="" className="h-full w-full object-contain" />
+                  <BrandArt slug={category?.slug} label={item.name} imageUrl={photo.imageUrl} alt="" fit="contain" />
                 </button>
               ))}
             </div>

@@ -6,6 +6,7 @@ export const paginationSchema = z.object({
 });
 
 export const productListSchema = paginationSchema.extend({
+  ids: z.string().max(6000).optional().transform(value => value?.split(',').filter(Boolean)).pipe(z.array(z.string().min(1).max(120)).max(48).optional()),
   q: z
     .string()
     .trim()

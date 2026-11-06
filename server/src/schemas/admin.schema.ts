@@ -181,6 +181,7 @@ export const settingsWriteSchema = z.object({
     )
     .max(6),
   lowStockThreshold: z.number().int().min(0).max(100),
+  autoPrintOrders: z.boolean(),
 });
 
 export const pageWriteSchema = z.object({

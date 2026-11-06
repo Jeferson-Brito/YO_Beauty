@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ArrowRight, Heart, MessageCircle, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ProductCard } from '../components/catalog/ProductCard';
 import { BrandArt } from '../components/visuals/BrandArt';
@@ -19,18 +20,25 @@ export function HomePage() {
   return (
     <main>
       <Hero banner={hero} />
-      <section className="store-wrap py-6">
+      <div className="store-wrap">
+        <div className="benefits-strip grid grid-cols-1 gap-4 py-5 sm:grid-cols-3 sm:py-7">
+          <div><Package size={19} /><span>Entrega para todo o Brasil<small>Consulte as opções de frete</small></span></div>
+          <div><Heart size={19} /><span>Um cuidado só seu<small>Beleza para cada momento</small></span></div>
+          <div><MessageCircle size={19} /><span>Atendimento de pertinho<small>Fale com a gente pelo WhatsApp</small></span></div>
+        </div>
+      </div>
+      <section data-reveal className="store-wrap py-10 sm:py-14">
         <div className="mb-8 flex items-center justify-center gap-6">
           <span className="hidden h-px w-16 bg-blush-200 sm:block" />
           <div className="text-center">
-            <h2 className="type-title">Categorias</h2>
-            <p className="type-note mt-3">Encontre tudo o que você precisa</p>
+            <p className="type-note mb-2 !text-[10px]">Seu próximo favorito está aqui</p>
+            <h2 className="type-title">Um universo de beleza</h2>
           </div>
           <span className="hidden h-px w-16 bg-blush-200 sm:block" />
         </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
           {data.homeCategories.map((category) => (
-            <Link key={category.id} to={`/categoria/${category.slug}`} className="group text-center">
+            <Link key={category.id} to={`/categoria/${category.slug}`} className="category-tile group text-center">
               <div className="overflow-hidden rounded-2xl border border-blush-200 bg-white shadow-sm transition duration-200 group-hover:-translate-y-1 group-hover:border-magenta-400 group-hover:shadow-md">
                 <div className="aspect-[4/3]">
                   <CategoryRotator category={category} />
@@ -44,9 +52,9 @@ export function HomePage() {
         </div>
       </section>
       {featured ? (
-        <section className="store-wrap py-10">
+        <section data-reveal className="store-wrap py-8 sm:py-12">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
-            <h2 className="type-section">{featured.title}</h2>
+            <div><p className="type-note mb-2 !text-[10px]">Escolhidos para você</p><h2 className="type-section">{featured.title}</h2></div>
             <span className="mb-3 hidden h-px flex-1 bg-blush-200 sm:block" />
             {featured.buttonUrl ? (
               <Link to={featured.buttonUrl} className="text-link text-xs font-semibold tracking-[0.16em] uppercase sm:mb-2">
@@ -54,19 +62,19 @@ export function HomePage() {
               </Link>
             ) : null}
           </div>
-          <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="product-grid grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {featured.products.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
         </section>
       ) : null}
-      <section className="store-wrap grid gap-4 py-6 lg:grid-cols-2">
+      <section data-reveal className="store-wrap grid gap-5 py-8 lg:grid-cols-2">
         {leftPromo ? <PromoBanner banner={leftPromo} align="left" slug="kits" /> : null}
         {rightPromo ? <PromoBanner banner={rightPromo} align="right" slug="lancamentos" /> : null}
       </section>
       {blocks.map((section) => (
-        <section key={section.id} className="store-wrap py-8">
+        <section data-reveal key={section.id} className="store-wrap py-8">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-4">
             <h2 className="type-section">{section.title}</h2>
             <span className="mb-3 hidden h-px flex-1 bg-blush-200 sm:block" />
@@ -80,7 +88,7 @@ export function HomePage() {
           {section.products.length === 0 ? (
             <p className="text-sm text-ink-500">Esta seção ainda não tem produtos.</p>
           ) : (
-            <div className="grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="product-grid grid grid-cols-2 items-stretch gap-4 sm:grid-cols-3 lg:grid-cols-4">
               {section.products.map((product) => (
                 <ProductCard key={product.id} product={product} />
               ))}
@@ -88,6 +96,15 @@ export function HomePage() {
           )}
         </section>
       ))}
+      <section data-reveal className="store-wrap pb-4 pt-10">
+        <div className="beauty-note relative overflow-hidden rounded-[2rem] border border-blush-200 bg-blush-50 px-6 py-12 text-center sm:px-12 sm:py-16">
+          <Heart className="mx-auto mb-4 text-magenta-500" size={24} strokeWidth={1.3} aria-hidden />
+          <p className="type-note !text-[10px]">Do nosso cantinho para o seu</p>
+          <h2 className="type-title mx-auto mt-3 max-w-lg">Pequenos cuidados.<br /><em>Grandes sorrisos.</em></h2>
+          <p className="type-body mx-auto mt-4 max-w-md">Makes, cosméticos e acessórios para deixar a sua rotina ainda mais sua.</p>
+          <Link to="/produtos" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-magenta-700">Encontre seu próximo favorito <ArrowRight size={16} /></Link>
+        </div>
+      </section>
     </main>
   );
 }
@@ -137,7 +154,7 @@ function CategoryRotator({ category }: { category: CategoryCard }) {
       >
         {slides.map((src, photoIndex) => (
           <div key={`${src}-${photoIndex}`} className="h-full px-3 py-2" style={{ width: `${100 / slides.length}%` }}>
-            <img src={src} alt="" className="h-full w-full object-contain" />
+            <BrandArt slug={category.slug} label={category.name} imageUrl={src} alt="" fit="contain" />
           </div>
         ))}
       </div>
@@ -148,21 +165,21 @@ function CategoryRotator({ category }: { category: CategoryCard }) {
 function Hero({ banner }: { banner?: StoreBanner }) {
   const background = banner?.imageUrl || '/home/hero-fundo.jpg';
   return (
-    <section className="store-wrap pt-4">
-      <div className="relative min-h-[400px] overflow-hidden rounded-[28px] bg-magenta-600 text-white shadow-lg sm:min-h-[440px] lg:min-h-[480px]">
+    <section className="store-wrap pt-5 sm:pt-7">
+      <div className="hero-scene relative min-h-[440px] overflow-hidden rounded-[2rem] bg-magenta-900 text-white shadow-lg sm:min-h-[480px] lg:min-h-[540px]">
         <img src={background} alt="" className="absolute inset-0 h-full w-full object-cover object-[70%_center] sm:object-right" />
-        <div className="absolute inset-0 bg-gradient-to-r from-magenta-900/85 via-magenta-800/55 to-magenta-900/10 sm:from-magenta-900/55 sm:via-magenta-700/15 sm:to-transparent" />
-        <div className="relative z-10 flex min-h-[400px] max-w-xl flex-col justify-center px-5 py-8 sm:min-h-[440px] sm:px-12 sm:py-12 lg:min-h-[480px]">
-          <p className="text-balance text-[10px] tracking-[0.14em] text-gold-300 uppercase sm:text-xs sm:tracking-[0.22em]">
+        <div className="hero-shade absolute inset-0" />
+        <div className="hero-copy relative z-10 flex min-h-[440px] max-w-xl flex-col justify-center px-7 py-10 sm:min-h-[480px] sm:px-12 lg:min-h-[540px] lg:px-16">
+          <p className="max-w-xs text-balance text-[9px] leading-5 tracking-[0.2em] text-gold-300 uppercase sm:text-[10px]">
             {banner?.eyebrow || 'Beleza, autocuidado e confiança em um só lugar'}
           </p>
-          <img src="/brand/logo-horizontal.png" alt="Yo Beauty" className="mt-4 h-auto w-full max-w-[420px] sm:max-w-[520px]" />
-          <p className="type-lead mt-2 text-balance text-white">{banner?.subtitle || 'Mais beleza para o seu dia a dia'} ♥</p>
+          <h1 className="mt-5 font-script text-[3.4rem] leading-[0.98] font-medium tracking-[-0.035em] text-white sm:text-[4.5rem] lg:text-[5rem]">Sua beleza,<br /><em className="text-gold-300">do seu jeito.</em></h1>
+          <p className="mt-5 max-w-[250px] text-sm leading-6 text-white/90 sm:max-w-xs">{banner?.subtitle || 'Mais beleza para o seu dia a dia'} ♥</p>
           <Link
             to={banner?.buttonUrl || '/produtos'}
-            className="outline-light mt-6 inline-flex w-fit items-center gap-3 rounded-full border border-white/80 px-6 py-2.5 text-xs font-semibold tracking-[0.18em] uppercase"
+            className="hero-cta mt-7 inline-flex min-h-12 w-fit items-center gap-6 rounded-full bg-white px-7 py-3 text-[10px] font-semibold tracking-[0.12em] text-magenta-900 uppercase"
           >
-            {banner?.buttonText || 'Compre agora'} <span aria-hidden="true">→</span>
+            {banner?.buttonText || 'Compre agora'} <ArrowRight size={17} aria-hidden />
           </Link>
         </div>
       </div>

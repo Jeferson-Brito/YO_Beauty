@@ -10,7 +10,7 @@ export default defineConfig({
     hookTimeout: 30000,
     env: {
       NODE_ENV: 'test',
-      DATABASE_URL: 'file:./test.db',
+      DATABASE_URL: 'postgresql://yo_test:yo_test_only@127.0.0.1:55439/yo_beauty_test',
       CLIENT_ORIGIN: 'http://localhost:5173',
       SESSION_SECRET: 'segredo-de-teste-sessao-yo',
       ANALYTICS_HASH_SECRET: 'segredo-de-teste-analytics-yo',

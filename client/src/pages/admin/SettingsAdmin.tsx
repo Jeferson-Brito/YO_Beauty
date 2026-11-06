@@ -30,6 +30,7 @@ type SettingsDraft = {
   debitCard: boolean;
   benefits: { icon?: string; title: string; description: string }[];
   lowStockThreshold: string;
+  autoPrintOrders: boolean;
 };
 
 function fromSettings(settings: AdminSettings): SettingsDraft {
@@ -61,6 +62,7 @@ function fromSettings(settings: AdminSettings): SettingsDraft {
       description: benefit.description ?? '',
     })),
     lowStockThreshold: String(settings.lowStockThreshold),
+    autoPrintOrders: Boolean(settings.autoPrintOrders),
   };
 }
 
@@ -124,6 +126,7 @@ function SettingsForm({ initial }: { initial: AdminSettings }) {
           description: benefit.description || undefined,
         })),
         lowStockThreshold: Number(draft.lowStockThreshold) || 0,
+        autoPrintOrders: draft.autoPrintOrders,
       });
       setSaved('Configurações salvas.');
       await queryClient.invalidateQueries({ queryKey: ['admin', 'settings'] });
@@ -198,6 +201,14 @@ function SettingsForm({ initial }: { initial: AdminSettings }) {
             <Toggle pressed={draft.creditCard} onClick={() => patch({ creditCard: !draft.creditCard })}>Crédito</Toggle>
             <Toggle pressed={draft.debitCard} onClick={() => patch({ debitCard: !draft.debitCard })}>Débito</Toggle>
           </div>
+        </Panel>
+        <Panel title="Impressão">
+          <p className="mb-3 text-sm text-ink-500">
+            Com a opção ligada, cada pedido novo abre a impressão na MPT-2 enquanto este painel estiver aberto no computador da impressora. Pedidos antigos não são impressos de novo.
+          </p>
+          <Toggle pressed={draft.autoPrintOrders} onClick={() => patch({ autoPrintOrders: !draft.autoPrintOrders })}>
+            {draft.autoPrintOrders ? 'Impressão automática ligada' : 'Impressão automática desligada'}
+          </Toggle>
         </Panel>
         <Panel title="Instagram">
           <Field label="Endereço do perfil" hint="O rodapé mostra este ícone e o WhatsApp. Deixe vazio para o ícone ficar sem link.">

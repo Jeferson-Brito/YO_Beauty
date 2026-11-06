@@ -21,3 +21,4 @@ client/dist/
 *.tsbuildinfo
 .vscode/
 .idea/
+.local/
