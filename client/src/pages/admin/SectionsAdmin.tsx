@@ -198,10 +198,10 @@ export function SectionsPage() {
         })}
       </div>
       {draft.id || creating ? (
-      <section className="rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="admin-panel rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="font-display text-3xl text-magenta-700">{draft.title.trim() || 'Nova seção'}</h2>
+            <h2 className="admin-editor-title">{draft.title.trim() || 'Nova seção'}</h2>
             {draft.id ? <p className="mt-1 text-sm text-ink-500">{placementLabel(draft.placement)}</p> : null}
           </div>
           <div className="flex items-center gap-4">

@@ -8,9 +8,9 @@ import type {
 
 export function Panel({ title, children, extra }: { title: string; children: ReactNode; extra?: ReactNode }) {
   return (
-    <section className="rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl text-magenta-700 sm:text-3xl">{title}</h2>
+    <section className="admin-panel rounded-2xl border border-blush-200 bg-white p-5 sm:p-6">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="admin-panel-title">{title}</h2>
         {extra}
       </div>
       {children}
@@ -20,7 +20,7 @@ export function Panel({ title, children, extra }: { title: string; children: Rea
 
 export function Field({ label, hint, children }: { label: string; hint?: string; children: ReactNode }) {
   return (
-    <label className="block text-sm text-ink-700">
+    <label className="admin-field block text-sm text-ink-700">
       <span className="font-medium">{label}</span>
       {hint ? <span className="mt-0.5 block text-xs text-ink-500">{hint}</span> : null}
       <div className="mt-1">{children}</div>
@@ -50,7 +50,7 @@ export function Check({
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-center gap-2 text-sm text-ink-700">
+    <label className="admin-check flex min-h-11 items-center gap-3 text-sm text-ink-700">
       <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
       {label}
     </label>
@@ -58,12 +58,12 @@ export function Check({
 }
 
 export function Notice({ children }: { children: ReactNode }) {
-  return <p className="text-sm text-magenta-700">{children}</p>;
+  return <p role="status" className="admin-notice text-sm text-magenta-700">{children}</p>;
 }
 
-export function PrimaryButton({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function PrimaryButton({ children, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
-    <button {...props} className="btn-cart max-w-xs">
+    <button {...props} className={`btn-cart max-w-xs ${className}`}>
       {children}
     </button>
   );
@@ -71,10 +71,11 @@ export function PrimaryButton({ children, ...props }: ButtonHTMLAttributes<HTMLB
 
 export function PageHeader({ title, hint, action }: { title: string; hint: string; action?: ReactNode }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div className="admin-page-heading mb-7 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 className="font-display text-4xl text-magenta-700">{title}</h1>
-        <p className="mt-1 max-w-2xl text-sm text-ink-500">{hint}</p>
+        <p className="workspace-eyebrow mb-2">Gestão da loja</p>
+        <h1 className="admin-page-title">{title}</h1>
+        <p className="mt-3 max-w-xl text-sm leading-6 text-ink-500">{hint}</p>
       </div>
       {action}
     </div>
@@ -96,10 +97,11 @@ export function ItemButton({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-2xl border px-3 py-2.5 text-left transition ${selected ? 'border-magenta-600 bg-magenta-600 text-white' : 'border-transparent hover:border-blush-200 hover:bg-blush-50'}`}
+      aria-pressed={selected}
+      className={`admin-item-button w-full rounded-xl border px-4 py-3 text-left transition ${selected ? 'border-blush-200 bg-blush-50 text-magenta-900' : 'border-transparent hover:border-blush-200 hover:bg-blush-50'}`}
     >
       <span className="block text-sm font-medium">{title}</span>
-      <span className={`mt-0.5 block text-xs ${selected ? 'text-white/80' : 'text-ink-500'}`}>{meta}</span>
+      <span className="mt-1 block text-xs text-ink-500">{meta}</span>
     </button>
   );
 }

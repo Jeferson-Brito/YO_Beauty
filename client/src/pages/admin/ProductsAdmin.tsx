@@ -1,3 +1,6 @@
+import { Plus } from 'lucide-react';
+import { Pagination } from '../../components/catalog/Pagination';
+import { BrandArt } from '../../components/visuals/BrandArt';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -17,9 +20,10 @@ export function ProductListPage() {
   const [term, setTerm] = useState('');
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<'ALL' | ProductStatus>('ALL');
+  const [page, setPage] = useState(1);
   const products = useQuery({
-    queryKey: ['admin', 'products', query, status],
-    queryFn: () => apiGet<ListResponse<AdminProductSummary>>(`/api/admin/products?pageSize=50&status=${status}${query ? `&q=${encodeURIComponent(query)}` : ''}`),
+    queryKey: ['admin', 'products', query, status, page],
+    queryFn: () => apiGet<ListResponse<AdminProductSummary>>(`/api/admin/products?pageSize=20&page=${page}&status=${status}${query ? `&q=${encodeURIComponent(query)}` : ''}`),
   });
 
   const rows = products.data?.data ?? [];
@@ -30,17 +34,17 @@ export function ProductListPage() {
       <PageHeader
         title="Produtos"
         hint="Clique em um produto para alterar preço, estoque, categorias e fotos."
-        action={<Link to="/admin/produtos/novo" className="btn-cart w-auto shrink-0 px-6">Novo produto</Link>}
+        action={<Link to="/admin/produtos/novo" className="btn-cart w-auto shrink-0 gap-2 px-6"><Plus size={16} /> Novo produto</Link>}
       />
       <form
-        className="mb-4 flex flex-col gap-2 rounded-[1.75rem] border border-blush-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center"
+        className="admin-filter-bar mb-5 flex flex-col gap-3 sm:flex-row sm:items-center"
         onSubmit={(event) => {
           event.preventDefault();
-          setQuery(term.trim());
+          setQuery(term.trim()); setPage(1);
         }}
       >
-        <TextInput value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar por nome ou SKU" className="min-w-0 flex-1" />
-        <Select value={status} onChange={(event) => setStatus(event.target.value as 'ALL' | ProductStatus)} className="sm:w-40" aria-label="Situação">
+        <TextInput value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar por nome ou SKU" aria-label="Buscar produtos" className="min-w-0 flex-1" />
+        <Select value={status} onChange={(event) => { setStatus(event.target.value as 'ALL' | ProductStatus); setPage(1); }} className="sm:w-40" aria-label="Situação">
           <option value="ALL">Todos</option>
           <option value="ACTIVE">Ativos</option>
           <option value="INACTIVE">Inativos</option>
@@ -62,7 +66,7 @@ export function ProductListPage() {
             <Link key={product.id} to={`/admin/produtos/${product.id}`} className="grid gap-3 border-t border-blush-100 px-4 py-3.5 transition first:border-t-0 hover:bg-blush-50 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_7rem] sm:items-center sm:gap-4">
               <span className="flex min-w-0 items-center gap-3">
                 <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-blush-200 bg-blush-50">
-                  {product.coverImageUrl ? <img src={product.coverImageUrl} alt="" className="h-full w-full object-contain p-1" /> : <span className="text-[10px] text-ink-500">Sem foto</span>}
+                  <BrandArt label={product.name} imageUrl={product.coverImageUrl} alt="" fit="contain" className="p-1" />
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate font-medium text-ink-900">{product.name}</span>
@@ -88,6 +92,7 @@ export function ProductListPage() {
         })}
         {products.data && rows.length === 0 ? <p className="p-6 text-sm text-ink-500">Nenhum produto encontrado.</p> : null}
       </div>
+      <Pagination page={page} pageCount={products.data?.meta?.pageCount ?? 1} onPage={(next) => { setPage(next); window.scrollTo({ top: 0, behavior: 'instant' }); }} />
       {total != null ? <p className="mt-3 text-sm text-ink-500">{total === 1 ? '1 produto' : `${total} produtos`}</p> : null}
     </div>
   );
@@ -281,7 +286,7 @@ function ProductForm({ product, photoError = '' }: { product?: AdminProduct; pho
   return (
     <div className="space-y-4">
       <Link to="/admin/produtos" className="text-link text-sm">Voltar para a lista</Link>
-      <section className="rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm sm:p-6">
+      <section className="admin-panel rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm sm:p-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <label className="group relative mx-auto grid h-36 w-36 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-[1.75rem] border border-blush-200 bg-blush-50 transition hover:border-magenta-400 sm:mx-0 sm:h-40 sm:w-40">
             {cover ? <img src={cover} alt="" className="h-full w-full object-contain p-3" /> : <span className="px-3 text-center text-xs text-ink-500">Sem foto</span>}

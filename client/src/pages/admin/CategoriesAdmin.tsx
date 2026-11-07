@@ -166,7 +166,7 @@ export function CategoriesPage() {
         action={<button type="button" className="btn-cart w-auto shrink-0 px-6" onClick={openNew}>Nova categoria</button>}
       />
       {categories.isError ? <Notice>Não foi possível carregar as categorias.</Notice> : null}
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="admin-tabs mb-5 flex flex-wrap gap-2">
         {rows.map((category) => {
           const current = !creating && category.id === selectedId;
           return (
@@ -184,9 +184,9 @@ export function CategoriesPage() {
       </div>
 
       {creating || editing ? (
-        <section className="mb-4 rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm">
+        <section className="admin-panel mb-4 rounded-[1.75rem] border border-blush-200 bg-white p-5 shadow-sm">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h2 className="font-display text-3xl text-magenta-700">{draft.name.trim() || 'Nova categoria'}</h2>
+            <h2 className="admin-editor-title">{draft.name.trim() || 'Nova categoria'}</h2>
             <div className="flex items-center gap-4">
               {draft.id ? <button type="button" className="text-sm text-magenta-700" onClick={() => void remove()}>Excluir</button> : null}
               <button type="button" className="text-sm text-ink-500" onClick={() => { setEditing(false); setCreating(false); setError(''); }}>Cancelar</button>
@@ -222,7 +222,7 @@ export function CategoriesPage() {
         <section>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="font-display text-3xl text-magenta-700">{selected.name}</h2>
+              <h2 className="admin-editor-title">{selected.name}</h2>
               <p className="mt-1 text-sm text-ink-500">{productCountLabel(selected.productCount)}</p>
             </div>
             <button type="button" className="text-sm text-magenta-700" onClick={openEditor}>Editar categoria</button>

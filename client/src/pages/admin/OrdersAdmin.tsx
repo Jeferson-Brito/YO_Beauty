@@ -1,3 +1,4 @@
+import { ChevronDown, ClipboardList } from 'lucide-react';
 import { Pagination } from '../../components/catalog/Pagination';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
@@ -76,21 +77,21 @@ export function OrdersPage() {
 
   return (
     <div>
-      <PageHeader title="Pedidos" hint="Clique em um pedido para ver o endereço, imprimir na MPT-2 ou cancelar um pedido ainda sem pagamento." />
+      <PageHeader title="Pedidos" hint="Acompanhe os pedidos, confira os detalhes e organize o atendimento." />
       {orders.isError ? <Notice>Não foi possível carregar os pedidos.</Notice> : null}
       <div className="space-y-3">
         {list.map((item) => {
           const open = selected === item.id;
           return (
-            <article key={item.id} className={`overflow-hidden rounded-[1.75rem] border bg-white shadow-sm ${open ? 'border-magenta-400' : 'border-blush-200'}`}>
-              <button type="button" className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 text-left hover:bg-blush-50 sm:px-5" onClick={() => setSelected(open ? null : item.id)}>
+            <article key={item.id} className={`admin-order-card overflow-hidden rounded-[1.75rem] border bg-white shadow-sm ${open ? 'border-magenta-400' : 'border-blush-200'}`}>
+              <button type="button" aria-expanded={open} className="flex w-full flex-wrap items-center justify-between gap-3 px-4 py-4 text-left hover:bg-blush-50 sm:px-5" onClick={() => setSelected(open ? null : item.id)}>
                 <span>
                   <span className="block font-medium text-ink-900">{item.orderNumber}</span>
                   <span className="mt-0.5 block text-sm text-ink-500">{item.customerName} · {new Date(item.createdAt).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</span>
                 </span>
                 <span className="flex items-center gap-3">
                   <span className="font-semibold text-price">{formatBRL(item.totalCents)}</span>
-                  <StatusChip status={item.paymentStatus} label={paymentLabel[item.paymentStatus] ?? item.paymentStatus} />
+                  <StatusChip status={item.paymentStatus} label={paymentLabel[item.paymentStatus] ?? item.paymentStatus} /><ChevronDown size={16} className={`text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </span>
               </button>
               {open ? (
@@ -148,14 +149,14 @@ export function OrdersPage() {
             </article>
           );
         })}
-        {orders.data && list.length === 0 ? <p className="text-sm text-ink-500">Nenhum pedido ainda.</p> : null}
+        {orders.data && list.length === 0 ? <div className="admin-chart-empty !min-h-64"><ClipboardList size={32} strokeWidth={1.25} /><h2 className="mt-4 text-base font-semibold text-ink-900">Tudo pronto para o próximo pedido</h2><p className="mt-2 text-sm text-ink-500">Os pedidos recebidos na loja aparecerão aqui.</p></div> : null}
       </div>
-      <Pagination page={page} pageCount={orders.data?.meta?.pageCount ?? 1} onPage={setPage} />
+      <Pagination page={page} pageCount={orders.data?.meta?.pageCount ?? 1} onPage={(next) => { setPage(next); window.scrollTo({ top: 0, behavior: 'instant' }); }} />
     </div>
   );
 }
 
 function StatusChip({ status, label }: { status: string; label: string }) {
-  const tone = status === 'CANCELLED' ? 'bg-zinc-100 text-zinc-500' : status === 'PAID' ? 'bg-blush-100 text-magenta-700' : 'bg-gold-300/40 text-gold-700';
+  const tone = status === 'CANCELLED' ? 'bg-zinc-100 text-zinc-500' : status === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800';
   return <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ${tone}`}>{label}</span>;
 }

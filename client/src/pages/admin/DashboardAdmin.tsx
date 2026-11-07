@@ -1,8 +1,10 @@
+import { ArrowDownRight, ArrowUpRight, BarChart3, CalendarDays, Download, Package, ShoppingBag, Users } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ApiError, apiGet } from '../../services/api';
 import { formatBRL } from '../../utils/money';
-import { Notice, Panel } from './ui';
+import { Notice, Panel, PageHeader } from './ui';
 
 type Metric = { revenueCents: number; change: number | null };
 type Rank = { name: string; quantity: number; revenueCents: number };
@@ -106,13 +108,9 @@ export function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-display text-4xl text-magenta-700">Indicadores</h1>
-          <p className="mt-1 max-w-2xl text-sm text-ink-500">
-            O faturamento usa somente pedidos pagos. Pendente não é venda. A confirmação real depende do gateway, que ainda não está ligado.
-          </p>
-        </div>
+      <PageHeader title="Visão geral" hint="Um olhar sobre seus pedidos, clientes e os resultados da loja." action={<Link to="/admin/produtos/novo" className="btn-cart w-auto gap-2 px-5"><Package size={15} /> Novo produto</Link>} />
+      <div className="admin-filter-bar flex flex-wrap items-end justify-between gap-4">
+        <div className="flex items-center gap-3"><span className="admin-icon-tile"><CalendarDays size={19} /></span><div><p className="text-sm font-semibold">Seus resultados</p><p className="mt-1 text-xs text-ink-500">Escolha o período que deseja acompanhar</p></div></div>
         <div className="flex flex-wrap items-end gap-2">
           <label className="text-sm">
             Período
@@ -126,14 +124,14 @@ export function DashboardPage() {
               <label className="text-sm">Fim<input type="date" className="field mt-1" value={endDate} onChange={(event) => setEndDate(event.target.value)} /></label>
             </>
           ) : null}
-          <button type="button" className="btn-cart max-w-40" onClick={() => void download()}>
-            Exportar CSV
+          <button type="button" className="admin-secondary-button" disabled={!data || report.isFetching} onClick={() => void download()}>
+            <Download size={15} /> Exportar CSV
           </button>
         </div>
       </div>
       {exportError ? <Notice>{exportError}</Notice> : null}
       {report.isError ? <Notice>Não foi possível carregar os indicadores.</Notice> : null}
-      {data ? <Report data={data} /> : <p className="text-sm text-ink-500">Carregando indicadores...</p>}
+      {data ? <Report data={data} /> : !report.isError ? <p role="status" className="admin-panel rounded-2xl bg-white p-8 text-sm text-ink-500">{preset === 'custom' && (!startDate || !endDate) ? 'Selecione as datas de início e fim para ver seus resultados.' : 'Carregando indicadores...'}</p> : null}
     </div>
   );
 }
@@ -142,23 +140,19 @@ function Report({ data }: { data: Dashboard }) {
   const max = Math.max(...data.series.map((row) => row.revenueCents), 1);
   return (
     <>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Card title="Dia" metric={data.cards.day} />
-        <Card title="Semana" metric={data.cards.week} />
-        <Card title="Mês" metric={data.cards.month} />
-        <Card title="Faturamento total" metric={data.cards.total} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Card title="Dia de referência" metric={data.cards.day} icon={ShoppingBag} />
+        <Card title="Semana de referência" metric={data.cards.week} icon={CalendarDays} />
+        <Card title="Mês de referência" metric={data.cards.month} icon={BarChart3} />
+        <Card title="Faturamento total" metric={data.cards.total} icon={Users} />
       </div>
       <Panel title="Faturamento no período">
-        <p className="text-sm text-ink-500">Referência {data.period.referenceDate}. Variação do período: {changeLabel(data.summary.revenueChange)}.</p>
-        <div className="mt-4 flex h-36 items-end gap-1">
-          {data.series.map((row) => (
-            <div key={row.date} className="group flex h-full flex-1 items-end" title={`${row.date}: ${formatBRL(row.revenueCents)}`}>
-              <div className="w-full rounded-t bg-magenta-500" style={{ height: `${Math.max(2, (row.revenueCents / max) * 100)}%` }} />
-            </div>
-          ))}
-        </div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-3xl font-semibold tracking-tight text-ink-900">{formatBRL(data.summary.revenueCents)}</p><p className="mt-2 text-xs text-ink-500">Referência {data.period.referenceDate} · {changeLabel(data.summary.revenueChange)}</p></div><span className="order-status">Somente pedidos pagos</span></div>
+        {data.series.some(row => row.revenueCents > 0) ? <div className="admin-revenue-chart mt-6 flex h-48 items-end gap-1" role="img" aria-label={`Faturamento no período: ${formatBRL(data.summary.revenueCents)}`}>
+          {data.series.map(row => <div key={row.date} className="group flex h-full min-w-0 flex-1 items-end" title={`${row.date}: ${formatBRL(row.revenueCents)}`}><div className="revenue-bar w-full rounded-t-md" style={{ height: `${(row.revenueCents / max) * 100}%` }} /></div>)}
+        </div> : <div className="admin-chart-empty my-6"><BarChart3 size={30} strokeWidth={1.25} /><p className="mt-3 text-sm font-medium text-ink-700">Seus resultados começam aqui</p><p className="mt-1 text-xs text-ink-500">Ainda não há faturamento de pedidos pagos neste período.</p></div>}
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-2xl bg-blush-50 p-3 text-sm">
+          <div className="admin-summary-block rounded-xl p-4 text-sm">
             <p className="font-medium text-magenta-700">Vendas</p>
             <p className="mt-2">Pedidos pagos: {data.summary.paidOrders}</p>
             <p>Ticket médio: {formatBRL(data.summary.averageTicketCents)} ({changeLabel(data.summary.ticketChange)})</p>
@@ -168,7 +162,7 @@ function Report({ data }: { data: Dashboard }) {
             <p>Em preparação: {data.summary.processing}</p>
             <p>Estornados: {data.summary.refunded}</p>
           </div>
-          <div className="rounded-2xl bg-blush-50 p-3 text-sm">
+          <div className="admin-summary-block rounded-xl p-4 text-sm">
             <p className="font-medium text-magenta-700">Clientes</p>
             <p className="mt-2">Cadastrados: {data.summary.registeredCustomers}</p>
             <p>Novos no mês: {data.summary.newCustomers}</p>
@@ -176,7 +170,7 @@ function Report({ data }: { data: Dashboard }) {
             <p>Recorrentes: {data.summary.recurringCustomers}</p>
             <p>Recorrentes no período: {data.summary.recurringInPeriod}</p>
           </div>
-          <div className="rounded-2xl bg-blush-50 p-3 text-sm">
+          <div className="admin-summary-block rounded-xl p-4 text-sm">
             <p className="font-medium text-magenta-700">Visitas</p>
             <p className="mt-2">Visitantes: {data.summary.visitors}</p>
             <p>Sessões: {data.summary.sessions}</p>
@@ -221,14 +215,9 @@ function Report({ data }: { data: Dashboard }) {
   );
 }
 
-function Card({ title, metric }: { title: string; metric: Metric }) {
-  return (
-    <section className="rounded-[1.5rem] border border-blush-200 bg-white p-4 shadow-sm">
-      <p className="text-xs tracking-[0.14em] text-ink-500 uppercase">{title}</p>
-      <p className="mt-2 text-2xl font-semibold text-price">{formatBRL(metric.revenueCents)}</p>
-      <p className="text-xs text-ink-500">{changeLabel(metric.change)}</p>
-    </section>
-  );
+function Card({ title, metric, icon: Icon }: { title: string; metric: Metric; icon: typeof ShoppingBag }) {
+  const Trend = metric.change != null && metric.change < 0 ? ArrowDownRight : ArrowUpRight;
+  return <section className="admin-metric-card"><div className="flex items-center justify-between gap-2"><p className="text-[11px] font-medium text-ink-500">{title}</p><span className="admin-icon-tile"><Icon size={17} /></span></div><p className="mt-5 text-[1.7rem] font-semibold tracking-tight text-ink-900">{formatBRL(metric.revenueCents)}</p><p className={`mt-3 inline-flex items-center gap-1 text-[11px] ${metric.change != null && metric.change > 0 ? 'text-emerald-700' : 'text-ink-500'}`}>{metric.change != null ? <Trend size={13} /> : null}{changeLabel(metric.change)}</p></section>;
 }
 
 function RankList({ title, rows }: { title: string; rows: Rank[] }) {
@@ -237,9 +226,9 @@ function RankList({ title, rows }: { title: string; rows: Rank[] }) {
       {rows.length === 0 ? <p className="text-sm text-ink-500">Sem venda paga neste período.</p> : null}
       <ul className="space-y-2 text-sm">
         {rows.map((row) => (
-          <li key={row.name} className="flex justify-between gap-3">
+          <li key={row.name} className="flex items-start justify-between gap-4 border-b border-blush-100 py-3 last:border-0">
             <span>{row.name}</span>
-            <span>{row.quantity} · {formatBRL(row.revenueCents)}</span>
+            <span className="shrink-0 text-right text-xs leading-5"><strong className="block font-semibold text-ink-900">{formatBRL(row.revenueCents)}</strong><span className="text-ink-500">{row.quantity} un.</span></span>
           </li>
         ))}
       </ul>
