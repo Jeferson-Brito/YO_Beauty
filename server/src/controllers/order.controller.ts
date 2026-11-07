@@ -41,5 +41,10 @@ export const getAdminOrder = asyncHandler(async (req: Request, res: Response) =>
 
 export const cancelAdminOrder = asyncHandler(async (req: Request, res: Response) => {
   const params = idSchema.parse(req.params);
-  res.json({ data: await orderService.cancel(params.id) });
+  res.json({ data: await orderService.cancel(params.id, actor(req)) });
+});
+
+export const cancelMyOrder = asyncHandler(async (req: Request, res: Response) => {
+  const params = idSchema.parse(req.params);
+  res.json({ data: await orderService.cancel(params.id, actor(req)) });
 });

@@ -32,6 +32,7 @@ enum PaymentStatus {
 }
 
 enum OrderStatus {
+  CONFIRMED
   AWAITING_PAYMENT
   PAID_AWAITING_PROCESSING
   PROCESSING
@@ -330,7 +331,8 @@ model Order {
   totalCents              Int
   refundedAmountCents     Int           @default(0)
   paymentStatus           PaymentStatus @default(PENDING)
-  orderStatus             OrderStatus   @default(AWAITING_PAYMENT)
+  orderStatus             OrderStatus   @default(CONFIRMED)
+  paymentMethod           String        @default("")
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
 

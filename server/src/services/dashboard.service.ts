@@ -20,16 +20,7 @@ function daysOf(range: TimeRange): string[] {
 }
 
 function orderFilter(start: Date, end: Date) {
-  return {
-    paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] as ('PAID' | 'PARTIALLY_REFUNDED')[] },
-    orderStatus: { not: 'CANCELLED' as const },
-    payments: {
-      some: {
-        status: { in: ['PAID', 'PARTIALLY_REFUNDED'] as ('PAID' | 'PARTIALLY_REFUNDED')[] },
-        paidAt: { gte: start, lt: end },
-      },
-    },
-  };
+  return { createdAt: { gte: start, lt: end }, orderStatus: { not: 'CANCELLED' as const } };
 }
 
 function csvCell(value: string | number): string {
@@ -49,11 +40,11 @@ export const dashboardService = {
     });
     const previous = previousEquivalent(range);
     const cards = await cardWindows(range);
-    const current = await salesRepository.summarizePaid(range.start, range.end);
-    const previousSales = await salesRepository.summarizePaid(previous.start, previous.end);
+    const current = await salesRepository.summarizeConfirmed(range.start, range.end);
+    const previousSales = await salesRepository.summarizeConfirmed(previous.start, previous.end);
     const created = await prisma.order.findMany({
       where: { createdAt: { gte: range.start, lt: range.end } },
-      select: { paymentStatus: true, orderStatus: true },
+      select: { orderStatus: true },
     });
     const counts = countOrdersByStatus(created);
     const registeredCustomers = await prisma.user.count({ where: { role: 'CLIENT' } });
@@ -82,15 +73,13 @@ export const dashboardService = {
       summary: {
         revenueCents: current.revenueCents,
         revenueChange: percentChange(current.revenueCents, previousSales.revenueCents),
-        paidOrders: current.paidOrders,
-        paidOrdersChange: percentChange(current.paidOrders, previousSales.paidOrders),
+        confirmedOrders: current.confirmedOrders,
+        confirmedOrdersChange: percentChange(current.confirmedOrders, previousSales.confirmedOrders),
         averageTicketCents: current.averageTicketCents,
         ticketChange: percentChange(current.averageTicketCents, previousSales.averageTicketCents),
         createdOrders: counts.created,
-        pendingPayment: counts.pendingPayment,
         cancelled: counts.cancelled,
         processing: counts.processing,
-        refunded: counts.refunded,
         registeredCustomers,
         newCustomers,
         buyers: current.distinctCustomers,
@@ -116,8 +105,8 @@ export const dashboardService = {
   async csv(input: { preset: PeriodPreset; startDate?: string; endDate?: string }) {
     const report = await this.build(input);
     const lines = [
-      ['data', 'faturamento_centavos', 'pedidos_pagos'].join(','),
-      ...report.series.map((row) => [csvCell(row.date), csvCell(row.revenueCents), csvCell(row.paidOrders)].join(',')),
+      ['data', 'faturamento_centavos', 'vendas_confirmadas'].join(','),
+      ...report.series.map((row) => [csvCell(row.date), csvCell(row.revenueCents), csvCell(row.confirmedOrders)].join(',')),
     ];
     return `\uFEFF${lines.join('\n')}\n`;
   },
@@ -126,13 +115,13 @@ export const dashboardService = {
 async function cardWindows(range: TimeRange) {
   const windows = anchoredCards(range.referenceDate, range.timeZone);
   const [day, previousDay, week, previousWeek, month, previousMonth, total] = await Promise.all([
-    salesRepository.summarizePaid(windows.day.start, windows.day.end),
-    salesRepository.summarizePaid(windows.previousDay.start, windows.previousDay.end),
-    salesRepository.summarizePaid(windows.week.start, windows.week.end),
-    salesRepository.summarizePaid(windows.previousWeek.start, windows.previousWeek.end),
-    salesRepository.summarizePaid(windows.month.start, windows.month.end),
-    salesRepository.summarizePaid(windows.previousMonth.start, windows.previousMonth.end),
-    salesRepository.summarizePaid(new Date(0), new Date('2999-01-01T00:00:00.000Z')),
+    salesRepository.summarizeConfirmed(windows.day.start, windows.day.end),
+    salesRepository.summarizeConfirmed(windows.previousDay.start, windows.previousDay.end),
+    salesRepository.summarizeConfirmed(windows.week.start, windows.week.end),
+    salesRepository.summarizeConfirmed(windows.previousWeek.start, windows.previousWeek.end),
+    salesRepository.summarizeConfirmed(windows.month.start, windows.month.end),
+    salesRepository.summarizeConfirmed(windows.previousMonth.start, windows.previousMonth.end),
+    salesRepository.summarizeConfirmed(new Date(0), new Date('2999-01-01T00:00:00.000Z')),
   ]);
   return {
     day: { revenueCents: day.revenueCents, change: percentChange(day.revenueCents, previousDay.revenueCents) },
@@ -144,35 +133,18 @@ async function cardWindows(range: TimeRange) {
 }
 
 async function dailySeries(range: TimeRange) {
-  const payments = await prisma.payment.findMany({
-    where: {
-      status: { in: ['PAID', 'PARTIALLY_REFUNDED'] },
-      paidAt: { gte: range.start, lt: range.end },
-      order: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] }, orderStatus: { not: 'CANCELLED' } },
-    },
-    select: {
-      paidAt: true,
-      orderId: true,
-      order: { select: { paymentStatus: true, orderStatus: true, totalCents: true, refundedAmountCents: true } },
-    },
-  });
-  const byDay = new Map<string, { revenueCents: number; orders: Set<string> }>();
-  for (const payment of payments) {
-    if (!payment.paidAt || !isRevenueOrder(payment.order)) continue;
-    const day = DateTime.fromJSDate(payment.paidAt, { zone: range.timeZone }).toISODate();
+  const orders = await prisma.order.findMany({ where: orderFilter(range.start, range.end), select: { createdAt: true, totalCents: true, orderStatus: true } });
+  const byDay = new Map<string, { revenueCents: number; count: number }>();
+  for (const order of orders) {
+    if (!isRevenueOrder(order)) continue;
+    const day = DateTime.fromJSDate(order.createdAt, { zone: range.timeZone }).toISODate();
     if (!day) continue;
-    const bucket = byDay.get(day) ?? { revenueCents: 0, orders: new Set<string>() };
-    if (!bucket.orders.has(payment.orderId)) {
-      bucket.orders.add(payment.orderId);
-      bucket.revenueCents += payment.order.totalCents - payment.order.refundedAmountCents;
-    }
+    const bucket = byDay.get(day) ?? { revenueCents: 0, count: 0 };
+    bucket.revenueCents += order.totalCents;
+    bucket.count++;
     byDay.set(day, bucket);
   }
-  return daysOf(range).map((date) => ({
-    date,
-    revenueCents: byDay.get(date)?.revenueCents ?? 0,
-    paidOrders: byDay.get(date)?.orders.size ?? 0,
-  }));
+  return daysOf(range).map(date => ({ date, revenueCents: byDay.get(date)?.revenueCents ?? 0, confirmedOrders: byDay.get(date)?.count ?? 0 }));
 }
 
 async function rankingsOf(range: TimeRange) {
@@ -182,7 +154,7 @@ async function rankingsOf(range: TimeRange) {
       productNameSnapshot: true,
       quantity: true,
       lineTotalCents: true,
-      order: { select: { paymentStatus: true, orderStatus: true, totalCents: true, refundedAmountCents: true } },
+      order: { select: { orderStatus: true, totalCents: true } },
       product: {
         select: {
           categories: { where: { isPrimary: true }, select: { category: { select: { name: true } } } },
@@ -230,41 +202,34 @@ async function trafficSnapshot(range: TimeRange) {
 async function loyaltySnapshot(range: TimeRange, rulesValue: unknown) {
   const rules = parseLoyaltyRules(rulesValue);
   const reference = DateTime.fromISO(range.referenceDate, { zone: range.timeZone }).endOf('day').toJSDate();
-  const payments = await prisma.payment.findMany({
-    where: {
-      status: { in: ['PAID', 'PARTIALLY_REFUNDED'] },
-      paidAt: { not: null },
-      order: { paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] }, orderStatus: { not: 'CANCELLED' } },
-    },
-    select: {
-      paidAt: true,
-      order: { select: { userId: true, paymentStatus: true, orderStatus: true, totalCents: true, refundedAmountCents: true } },
-    },
+  const orders = await prisma.order.findMany({
+    where: { orderStatus: { not: 'CANCELLED' } },
+    select: { userId: true, createdAt: true, orderStatus: true, totalCents: true },
   });
   const grouped = new Map<string, { spent: number; dates: Date[] }>();
-  for (const payment of payments) {
-    if (!payment.paidAt || !isRevenueOrder(payment.order)) continue;
-    const current = grouped.get(payment.order.userId) ?? { spent: 0, dates: [] };
-    current.spent += payment.order.totalCents - payment.order.refundedAmountCents;
-    current.dates.push(payment.paidAt);
-    grouped.set(payment.order.userId, current);
+  for (const order of orders) {
+    if (!isRevenueOrder(order)) continue;
+    const current = grouped.get(order.userId) ?? { spent: 0, dates: [] };
+    current.spent += order.totalCents;
+    current.dates.push(order.createdAt);
+    grouped.set(order.userId, current);
   }
   const segments = Object.fromEntries(SEGMENTS.map((segment) => [segment, 0])) as Record<CustomerSegment, number>;
   let recurringCustomers = 0;
   let recurringInPeriod = 0;
   const averages: number[] = [];
   for (const customer of grouped.values()) {
-    const paidOrders = customer.dates.length;
+    const confirmedOrders = customer.dates.length;
     const lastPaidAt = customer.dates.reduce((latest, date) => (date > latest ? date : latest));
     const segment = classifyCustomer({
-      paidOrders,
+      paidOrders: confirmedOrders,
       netSpentCents: customer.spent,
       lastPaidAt,
       referenceDate: reference,
       rules,
     });
     segments[segment] += 1;
-    if (paidOrders >= 2) {
+    if (confirmedOrders >= 2) {
       recurringCustomers += 1;
       if (customer.dates.some((date) => date >= range.start && date < range.end)) recurringInPeriod += 1;
     }

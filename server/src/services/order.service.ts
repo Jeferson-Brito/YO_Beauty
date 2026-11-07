@@ -20,7 +20,6 @@ type AddressInput = {
 
 const orderInclude = {
   items: { orderBy: { productNameSnapshot: 'asc' as const } },
-  payments: true,
 } satisfies Prisma.OrderInclude;
 
 function mergeItems(items: RequestedItem[]): RequestedItem[] {
@@ -94,7 +93,7 @@ function toOrder(order: Prisma.OrderGetPayload<{ include: typeof orderInclude }>
     shippingCostCents: order.shippingCostCents,
     discountAmountCents: order.discountAmountCents,
     totalCents: order.totalCents,
-    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod,
     orderStatus: order.orderStatus,
     createdAt: order.createdAt.toISOString(),
     items: order.items.map((item) => ({
@@ -106,14 +105,6 @@ function toOrder(order: Prisma.OrderGetPayload<{ include: typeof orderInclude }>
       quantity: item.quantity,
       lineTotalCents: item.lineTotalCents,
     })),
-    payment: order.payments[0]
-      ? {
-          status: order.payments[0].status,
-          provider: order.payments[0].provider,
-          amountCents: order.payments[0].amountCents,
-          paidAt: order.payments[0].paidAt?.toISOString() ?? null,
-        }
-      : null,
   };
 }
 
@@ -268,8 +259,8 @@ export const orderService = {
           shippingCostCents: shipping.shippingCostCents,
           discountAmountCents: 0,
           totalCents,
-          paymentStatus: 'PENDING',
-          orderStatus: 'AWAITING_PAYMENT',
+          paymentMethod: input.paymentMethod,
+          orderStatus: 'CONFIRMED',
           items: {
             create: priced.map((line) => ({
               productId: line.product.id,
@@ -279,13 +270,6 @@ export const orderService = {
               quantity: line.quantity,
               lineTotalCents: line.unitPriceCents * line.quantity,
             })),
-          },
-          payments: {
-            create: {
-              provider: input.paymentMethod,
-              status: 'PENDING',
-              amountCents: totalCents,
-            },
           },
         },
         include: orderInclude,
@@ -353,24 +337,21 @@ export const orderService = {
     return { data: await presentMany(orders), meta: pageMeta(query.page, query.pageSize, total) };
   },
 
-  async cancel(id: string) {
+  async cancel(id: string, actor: { id: string; role: string }) {
     const existing = await prisma.order.findUnique({ where: { id }, include: { items: true } });
-    if (!existing) throw new AppError(404, 'Pedido não encontrado.', 'ORDER_NOT_FOUND');
+    if (!existing || (actor.role !== 'ADMIN' && existing.userId !== actor.id)) throw new AppError(404, 'Pedido não encontrado.', 'ORDER_NOT_FOUND');
     if (existing.orderStatus === 'CANCELLED') {
       throw new AppError(409, 'Este pedido já está cancelado.', 'ORDER_CANCELLED');
-    }
-    if (existing.paymentStatus !== 'PENDING') {
-      throw new AppError(409, 'Só um pedido ainda sem pagamento pode ser cancelado por aqui.', 'ORDER_NOT_PENDING');
     }
 
     const updated = await prisma.$transaction(async (tx) => {
       // Apenas uma transação pode assumir o cancelamento e devolver o estoque.
       const claimed = await tx.order.updateMany({
-        where: { id, paymentStatus: 'PENDING', orderStatus: { not: 'CANCELLED' } },
-        data: { orderStatus: 'CANCELLED', paymentStatus: 'CANCELLED' },
+        where: { id, orderStatus: { not: 'CANCELLED' } },
+        data: { orderStatus: 'CANCELLED' },
       });
       if (claimed.count !== 1) {
-        throw new AppError(409, 'O pedido já foi cancelado ou teve o pagamento atualizado.', 'ORDER_CHANGED');
+        throw new AppError(409, 'O pedido já foi cancelado.', 'ORDER_CHANGED');
       }
       for (const item of existing.items) {
         if (!item.productId) continue;
@@ -379,13 +360,9 @@ export const orderService = {
           data: { stockQuantity: { increment: item.quantity } },
         });
       }
-      await tx.payment.updateMany({
-        where: { orderId: id, status: 'PENDING' },
-        data: { status: 'CANCELLED' },
-      });
       return tx.order.update({
         where: { id },
-        data: { orderStatus: 'CANCELLED', paymentStatus: 'CANCELLED' },
+        data: { orderStatus: 'CANCELLED' },
         include: orderInclude,
       });
     });

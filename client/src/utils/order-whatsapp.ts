@@ -39,7 +39,7 @@ type OrderMessage = {
   subtotalCents: number;
   shippingCostCents: number;
   totalCents: number;
-  payment?: { provider?: string | null } | null;
+  paymentMethod?: string;
 };
 
 export function orderWhatsappText(order: OrderMessage, freeShippingThresholdCents = 0) {
@@ -50,7 +50,7 @@ export function orderWhatsappText(order: OrderMessage, freeShippingThresholdCent
   const place = [address.neighborhood?.trim(), [address.city?.trim(), address.state?.trim()].filter(Boolean).join('/')].filter(Boolean).join(' — ');
   const freeShipping = freeShippingThresholdCents > 0 && order.shippingCostCents === 0 && order.subtotalCents >= freeShippingThresholdCents;
   const freight = order.shippingCostCents > 0 ? formatBRL(order.shippingCostCents) : freeShipping ? 'Grátis' : 'Ainda não incluído';
-  const method = paymentMethodLabel(order.payment?.provider) || 'A combinar';
+  const method = paymentMethodLabel(order.paymentMethod) || 'Não informado';
   const items = order.items
     .map((item) => `• ${item.quantity}× ${item.name}\n  ${formatBRL(item.unitPriceCents)} cada · ${formatBRL(item.lineTotalCents)}`)
     .join('\n');
@@ -79,7 +79,7 @@ export function orderWhatsappText(order: OrderMessage, freeShippingThresholdCent
     '',
     '*Pagamento*',
     `Forma escolhida: ${method}`,
-    'Nenhuma cobrança foi feita no site. O pedido aguarda a confirmação da loja.',
+    'Pedido confirmado no site.',
   ]
     .filter((line, index, list) => line !== '' || list[index - 1] !== '')
     .join('\n')

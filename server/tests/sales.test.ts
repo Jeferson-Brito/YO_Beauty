@@ -14,7 +14,7 @@ describe('faturamento persistido', () => {
     await prisma.user.deleteMany({ where: { email: 'compradora.teste@yobeauty.local' } });
   });
 
-  it('soma somente pagamentos confirmados e ranqueia o produto vendido', async () => {
+  it('soma pedidos pela criação e ignora os dados legados de pagamento', async () => {
     expect(await prisma.order.count()).toBe(0);
 
     const buyer = await prisma.user.create({
@@ -30,6 +30,7 @@ describe('faturamento persistido', () => {
     const paid = await prisma.order.create({
       data: {
         orderNumber: 'YB-TESTE-0001',
+        createdAt: new Date('2026-10-10T15:00:00.000Z'),
         userId: buyer.id,
         customerName: buyer.name,
         customerEmail: buyer.email,
@@ -63,6 +64,7 @@ describe('faturamento persistido', () => {
     await prisma.order.create({
       data: {
         orderNumber: 'YB-TESTE-0002',
+        createdAt: new Date('2026-10-11T15:00:00.000Z'),
         userId: buyer.id,
         customerName: buyer.name,
         customerEmail: buyer.email,
@@ -82,16 +84,16 @@ describe('faturamento persistido', () => {
       },
     });
 
-    const summary = await salesRepository.summarizePaid(start, end);
-    expect(summary.revenueCents).toBe(8000);
-    expect(summary.paidOrders).toBe(1);
-    expect(summary.averageTicketCents).toBe(8000);
+    const summary = await salesRepository.summarizeConfirmed(start, end);
+    expect(summary.revenueCents).toBe(14990);
+    expect(summary.confirmedOrders).toBe(2);
+    expect(summary.averageTicketCents).toBe(7495);
     expect(summary.distinctCustomers).toBe(1);
 
     const ranking = await productRepository.bestSellers(5);
     expect(ranking.map((product) => product.slug)).toEqual([gloss.slug]);
 
-    const outside = await salesRepository.summarizePaid(
+    const outside = await salesRepository.summarizeConfirmed(
       new Date('2026-11-01T03:00:00.000Z'),
       new Date('2026-12-01T03:00:00.000Z'),
     );

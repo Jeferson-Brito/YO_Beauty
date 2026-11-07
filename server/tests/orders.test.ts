@@ -15,7 +15,7 @@ const address = {
   state: 'pe',
 };
 
-describe('carrinho e pedido pendente', () => {
+describe('carrinho e venda confirmada', () => {
   const buyer = request.agent(app);
   const other = request.agent(app);
   const admin = request.agent(app);
@@ -97,19 +97,21 @@ describe('carrinho e pedido pendente', () => {
       address,
     });
     expect(created.status).toBe(201);
-    expect(created.body.data.paymentStatus).toBe('PENDING');
-    expect(created.body.data.orderStatus).toBe('AWAITING_PAYMENT');
+    expect(created.body.data.paymentStatus).toBeUndefined();
+    expect(created.body.data.paymentMethod).toBe('pix');
+    expect(created.body.data.orderStatus).toBe('CONFIRMED');
     expect(created.body.data.items).toHaveLength(1);
     expect(created.body.data.items[0].quantity).toBe(2);
     expect(created.body.data.items[0].unitPriceCents).toBe(2990);
     expect(created.body.data.totalCents).toBe(5980);
-    expect(created.body.data.payment.paidAt).toBeNull();
-    expect(created.body.data.payment.provider).toBe('pix');
-    expect(created.body.data.payment.status).toBe('PENDING');
+    expect(created.body.data.payment).toBeUndefined();
+    expect(await prisma.payment.count({ where: { orderId: created.body.data.id } })).toBe(0);
     expect((await prisma.product.findUniqueOrThrow({ where: { id: gloss.id } })).stockQuantity).toBe(38);
 
     const hidden = await other.get(`/api/orders/${created.body.data.id}`);
     expect(hidden.status).toBe(404);
+    expect((await other.post(`/api/orders/${created.body.data.id}/cancel`)).status).toBe(404);
+    expect((await request(app).post(`/api/orders/${created.body.data.id}/cancel`)).status).toBe(401);
     const mine = await buyer.get(`/api/orders/${created.body.data.id}`);
     expect(mine.status).toBe(200);
     expect(mine.body.data.address.state).toBe('PE');
@@ -135,5 +137,10 @@ describe('carrinho e pedido pendente', () => {
 
     const forbidden = await buyer.post(`/api/admin/orders/${created.body.data.id}/cancel`);
     expect(forbidden.status).toBe(403);
+    const another = await buyer.post('/api/orders').send({ items: [{ productId: gloss.id, quantity: 1 }], phone: '81999990000', paymentMethod: 'cash', address });
+    expect(another.body.data.paymentMethod).toBe('cash');
+    const mixed = await Promise.all([buyer.post(`/api/orders/${another.body.data.id}/cancel`), admin.post(`/api/admin/orders/${another.body.data.id}/cancel`)]);
+    expect(mixed.map(response => response.status).sort()).toEqual([200, 409]);
+    expect((await prisma.product.findUniqueOrThrow({ where: { id: gloss.id } })).stockQuantity).toBe(40);
   });
 });

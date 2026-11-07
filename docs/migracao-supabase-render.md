@@ -36,4 +36,6 @@ Se um arquivo já foi perdido em um deploy anterior e não está no backup, ser�
 
 ## Pedidos e pagamentos
 
-Pedidos nascem pendentes, reservam estoque e abrem uma mensagem no WhatsApp. A loja ainda não cobra no site. Só pagamentos confirmados entram no faturamento. O cancelamento assume o pedido atomicamente antes de devolver estoque, impedindo devolução duplicada por cliques simultâneos.
+O cliente escolhe a forma de pagamento no checkout. Confirmar e abrir WhatsApp registra a venda, desconta estoque e prepara a mensagem com essa escolha. O site não processa nem verifica pagamento e não observa o envio efetivo da mensagem. Pedidos não cancelados contam nos indicadores pela data de criação, inclusive os antigos que antes aguardavam pagamento.
+
+Cliente e administrador podem cancelar. O cancelamento retira a venda dos indicadores e devolve estoque atomicamente, sem duplicação. Registros antigos de pagamento permanecem no banco por compatibilidade histórica, mas não controlam pedidos nem faturamento. Novos pedidos usam `Order.paymentMethod` e não criam registros em `Payment`.

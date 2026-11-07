@@ -117,7 +117,6 @@ export const productRepository = {
       where: {
         productId: { not: null },
         order: {
-          paymentStatus: { in: ['PAID', 'PARTIALLY_REFUNDED'] },
           orderStatus: { not: 'CANCELLED' },
         },
       },

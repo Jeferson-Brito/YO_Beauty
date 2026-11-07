@@ -1,3 +1,4 @@
+import { orderStatusLabel } from './order-status';
 import { formatPostalCode } from './cep';
 import { formatBRL } from './money';
 import { paymentMethodLabel } from './order-whatsapp';
@@ -12,7 +13,7 @@ export type PrintableOrder = {
   shippingCostCents?: number;
   discountAmountCents?: number;
   totalCents: number;
-  paymentStatus: string;
+  paymentMethod?: string;
   orderStatus: string;
   address: {
     street?: string;
@@ -24,25 +25,6 @@ export type PrintableOrder = {
     postalCode?: string;
   };
   items: { id: string; name: string; sku?: string; quantity: number; lineTotalCents: number }[];
-  payment?: { provider?: string | null } | null;
-};
-
-const paymentStatusLabel: Record<string, string> = {
-  PENDING: 'Aguardando pagamento',
-  PAID: 'Pago',
-  FAILED: 'Pagamento não concluído',
-  REFUNDED: 'Estornado',
-  PARTIALLY_REFUNDED: 'Estornado em parte',
-  CANCELLED: 'Cancelado',
-};
-
-const orderStatusLabel: Record<string, string> = {
-  AWAITING_PAYMENT: 'Aguardando pagamento',
-  PAID_AWAITING_PROCESSING: 'Pago, aguardando separação',
-  PROCESSING: 'Em preparação',
-  SHIPPED: 'Enviado',
-  DELIVERED: 'Entregue',
-  CANCELLED: 'Cancelado',
 };
 
 function escapeHtml(value: string) {
@@ -67,7 +49,7 @@ function receiptHtml(order: PrintableOrder) {
   const street = [address.street?.trim(), address.number?.trim()].filter(Boolean).join(', ');
   const place = [address.city?.trim(), address.state?.trim()].filter(Boolean).join('/');
   const postal = formatPostalCode(address.postalCode);
-  const payment = paymentMethodLabel(order.payment?.provider) || 'A combinar';
+  const payment = paymentMethodLabel(order.paymentMethod) || 'Não informado';
   const items = order.items
     .map((item) => {
       const sku = item.sku ? `<div class="sku">${escapeHtml(item.sku)}</div>` : '';
@@ -121,7 +103,6 @@ function receiptHtml(order: PrintableOrder) {
   ${line('Total', formatBRL(order.totalCents))}
   <div class="rule"></div>
   ${line('Pagamento', payment)}
-  <div>${escapeHtml(paymentStatusLabel[order.paymentStatus] ?? order.paymentStatus)}</div>
   <div>${escapeHtml(orderStatusLabel[order.orderStatus] ?? order.orderStatus)}</div>
   <div class="rule"></div>
   <p class="center">Obrigada pela compra</p>

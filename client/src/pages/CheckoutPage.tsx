@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
+import { orderStatusLabel } from '../utils/order-status';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { LineThumb } from '../components/catalog/LineThumb';
@@ -31,9 +32,8 @@ type StoreOrder = {
   subtotalCents: number;
   shippingCostCents: number;
   totalCents: number;
-  paymentStatus: string;
+  paymentMethod: string;
   orderStatus: string;
-  payment?: { provider?: string | null; status?: string | null } | null;
   createdAt: string;
   items: {
     id: string;
@@ -45,24 +45,6 @@ type StoreOrder = {
     unitPriceCents: number;
     lineTotalCents: number;
   }[];
-};
-
-const paymentLabel: Record<string, string> = {
-  PENDING: 'Aguardando pagamento',
-  PAID: 'Pago',
-  FAILED: 'Pagamento não concluído',
-  REFUNDED: 'Estornado',
-  PARTIALLY_REFUNDED: 'Estornado em parte',
-  CANCELLED: 'Cancelado',
-};
-
-const orderLabel: Record<string, string> = {
-  AWAITING_PAYMENT: 'Aguardando pagamento',
-  PAID_AWAITING_PROCESSING: 'Pago, aguardando separação',
-  PROCESSING: 'Em preparação',
-  SHIPPED: 'Enviado',
-  DELIVERED: 'Entregue',
-  CANCELLED: 'Cancelado',
 };
 
 export function CheckoutPage() {
@@ -238,7 +220,7 @@ export function CheckoutPage() {
         </div>
         <fieldset className="mt-6">
           <legend className="text-sm font-medium">Forma de pagamento</legend>
-          <p className="mt-1 text-sm text-ink-500">Escolha como prefere pagar. A loja confirma pelo WhatsApp e nada é cobrado nesta tela.</p>
+          <p className="mt-1 text-sm text-ink-500">Escolha a forma de pagamento que vai aparecer no seu pedido.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             {enabledPaymentMethods(home.data?.data.store.paymentMethods).map((method) => (
               <label
@@ -279,7 +261,7 @@ export function CheckoutPage() {
         </ul>
         <p className="mt-4 text-sm text-ink-500">{quoted?.shippingLabel}</p>
         <p className="mt-2 text-lg font-semibold text-price">Total {quoted ? formatBRL(quoted.totalCents) : '...'}</p>
-        <p className="mt-3 text-xs text-ink-500">Nenhum pagamento é feito no site. Ao confirmar, o WhatsApp abre com o pedido pronto para você enviar.</p>
+        <p className="mt-3 text-xs text-ink-500">Ao confirmar, seu pedido é registrado e o WhatsApp abre com a mensagem pronta para enviar.</p>
         {error ? <p className="mt-3 text-sm text-magenta-700">{error}</p> : null}
         <button type="button" className="btn-cart mt-4" disabled={pending || !quoted?.ready || !paymentMethod} onClick={() => void confirm()}>
           {pending ? 'Registrando pedido...' : 'Confirmar e abrir WhatsApp'}
@@ -291,6 +273,10 @@ export function CheckoutPage() {
 
 export function OrderPage() {
   const { id } = useParams();
+  const queryClient = useQueryClient();
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState('');
   const home = useHome();
   const order = useQuery({
     queryKey: ['order', id],
@@ -308,19 +294,15 @@ export function OrderPage() {
     home.data?.data.store.whatsappNumber || DEFAULT_STORE_WHATSAPP,
     home.data?.data.store.freeShippingThresholdCents ?? 0,
   );
-  const method = paymentMethodLabel(data.payment?.provider);
+  const method = paymentMethodLabel(data.paymentMethod);
 
   return (
     <main className="store-wrap max-w-3xl py-8 sm:py-10">
-      <h1 className="type-title">Pedido confirmado</h1>
+      <h1 className="type-title">{data.orderStatus === 'CANCELLED' ? 'Pedido cancelado' : 'Pedido confirmado'}</h1>
       <div className="mt-6 rounded-3xl border border-blush-200 bg-white p-4 sm:p-6">
         <p className="text-ink-700">Número {data.orderNumber}</p>
-        <p className="mt-1 text-sm text-ink-500">{[paymentLabel[data.paymentStatus] ?? data.paymentStatus, orderLabel[data.orderStatus] ?? data.orderStatus].filter((label, index, list) => list.indexOf(label) === index).join(' · ')}</p>
-        {data.paymentStatus === 'PENDING' ? (
-          <p className="mt-4 text-sm text-ink-700">
-            O pedido foi registrado e nenhuma cobrança foi feita no site. Envie a mensagem no WhatsApp para a loja confirmar o pagamento{method ? ` por ${method}` : ''}.
-          </p>
-        ) : null}
+        <p className="mt-1 text-sm text-ink-500">{orderStatusLabel[data.orderStatus] ?? data.orderStatus}</p>
+        {data.orderStatus !== 'CANCELLED' ? <p className="mt-4 text-sm text-ink-700">Seu pedido está confirmado. Envie a mensagem pelo WhatsApp com os itens, a entrega e a forma de pagamento escolhida.</p> : <p className="mt-4 text-sm text-ink-700">Este pedido foi cancelado e não conta como venda.</p>}
         <ul className="mt-6 space-y-3">
           {data.items.map((item) => (
             <li key={item.id} className="flex items-center gap-3 border-t border-blush-100 pt-3 first:border-t-0 first:pt-0">
@@ -345,11 +327,23 @@ export function OrderPage() {
           {data.customerPhone ? <p>{data.customerPhone}</p> : null}
           {method ? <p className="mt-2">Pagamento escolhido: {method}</p> : null}
         </div>
-        {whatsapp ? (
+        {whatsapp && data.orderStatus !== 'CANCELLED' ? (
           <a className="btn-cart mt-5" href={whatsapp} target="_blank" rel="noreferrer">
             Enviar pedido pelo WhatsApp
           </a>
         ) : null}
+        {data.orderStatus !== 'CANCELLED' ? <div className="mt-6 border-t border-blush-100 pt-5">
+          {confirmCancel ? <div><p className="text-sm text-ink-700">Deseja cancelar este pedido? Os itens serão devolvidos ao estoque.</p><div className="mt-3 flex flex-wrap gap-3"><button type="button" className="page-button" disabled={cancelling} onClick={async () => {
+            setCancelling(true); setCancelError('');
+            try {
+              await apiSend(`/api/orders/${id}/cancel`, 'POST');
+              await Promise.all([queryClient.invalidateQueries({ queryKey: ['order', id] }), queryClient.invalidateQueries({ queryKey: ['my-orders'] }), queryClient.invalidateQueries({ queryKey: ['admin'] }), queryClient.invalidateQueries({ queryKey: ['home'] }), queryClient.invalidateQueries({ queryKey: ['products'] })]);
+              setConfirmCancel(false);
+            } catch (error) { setCancelError(error instanceof ApiError ? error.message : 'Não foi possível cancelar o pedido.'); }
+            finally { setCancelling(false); }
+          }}>{cancelling ? 'Cancelando...' : 'Confirmar cancelamento'}</button><button type="button" className="text-link text-sm" disabled={cancelling} onClick={() => setConfirmCancel(false)}>Manter pedido</button></div></div> : <button type="button" className="text-link text-sm" onClick={() => setConfirmCancel(true)}>Cancelar pedido</button>}
+          {cancelError ? <p role="alert" className="mt-3 text-sm text-magenta-700">{cancelError}</p> : null}
+        </div> : null}
         <Link to="/minha-conta" className="text-link mt-4 inline-block text-sm">Ver meus pedidos</Link>
       </div>
     </main>

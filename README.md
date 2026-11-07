@@ -1,6 +1,6 @@
 # Yo Beauty
 
-Loja virtual da **Yo Beauty — Makes, Cosméticos e Acessórios**. A vitrine, o carrinho, o painel e os indicadores funcionam no ambiente local. A cobrança real entra na integração com o gateway.
+Loja virtual da **Yo Beauty — Makes, Cosméticos e Acessórios**. A vitrine, o carrinho, o painel e os indicadores funcionam no ambiente local. O cliente escolhe a forma de pagamento no checkout; o pedido confirmado abre a mensagem no WhatsApp e já conta como venda. O site não cobra nem verifica pagamentos.
 
 ## O que já funciona
 
@@ -97,6 +97,6 @@ O comando recusa promover um e-mail que já pertence a um cliente.
 
 Os produtos demonstrativos não têm foto. O card mostra a ausência de imagem em vez de uma fotografia genérica.
 
-## Próxima etapa
+## Vendas pelo WhatsApp
 
-Integração com um gateway de pagamento. Até lá, o pedido fica aguardando pagamento e não entra no faturamento.
+Ao clicar em **Confirmar e abrir WhatsApp**, o pedido é registrado como confirmado e conta nos indicadores, sem confirmação de pagamento. A forma escolhida aparece na mensagem e no comprovante impresso. Cliente ou administrador podem cancelar: a venda sai dos indicadores e o estoque é devolvido uma única vez. O site não verifica o envio efetivo da mensagem nem acompanha o que ocorre no WhatsApp.

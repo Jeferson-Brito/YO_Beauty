@@ -20,6 +20,6 @@ Revisão da versão local, antes da integração de pagamento.
 
 ## O que continua de fora
 
-- Não há cobrança nem armazenamento de cartão. O pedido nasce pendente.
+- Não há cobrança nem armazenamento de cartão. O pedido nasce confirmado para envio ao WhatsApp e não representa confirmação de recebimento do pagamento.
 - O banco de produção é PostgreSQL. Fotos enviadas são persistidas nesse banco; desenvolvimento e testes usam bancos locais isolados.
 - O texto de privacidade é a base operacional e deve ser revisado pela proprietária antes de uma campanha pública.

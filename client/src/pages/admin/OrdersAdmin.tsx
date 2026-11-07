@@ -1,3 +1,4 @@
+import { orderStatusLabel } from '../../utils/order-status';
 import { ChevronDown, ClipboardList } from 'lucide-react';
 import { Pagination } from '../../components/catalog/Pagination';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,30 +21,11 @@ type AdminOrder = {
   subtotalCents?: number;
   shippingCostCents?: number;
   discountAmountCents?: number;
-  paymentStatus: string;
+  paymentMethod: string;
   orderStatus: string;
   createdAt: string;
   address: { street?: string; number?: string; complement?: string; neighborhood?: string; city?: string; state?: string; postalCode?: string };
   items: { id: string; name: string; sku: string; quantity: number; lineTotalCents: number; imageUrl?: string | null; categorySlug?: string; slug?: string }[];
-  payment?: { provider?: string | null; status?: string | null } | null;
-};
-
-const paymentLabel: Record<string, string> = {
-  PENDING: 'Aguardando pagamento',
-  PAID: 'Pago',
-  FAILED: 'Pagamento não concluído',
-  REFUNDED: 'Estornado',
-  PARTIALLY_REFUNDED: 'Estornado em parte',
-  CANCELLED: 'Cancelado',
-};
-
-const orderLabel: Record<string, string> = {
-  AWAITING_PAYMENT: 'Aguardando pagamento',
-  PAID_AWAITING_PROCESSING: 'Pago, aguardando separação',
-  PROCESSING: 'Em preparação',
-  SHIPPED: 'Enviado',
-  DELIVERED: 'Entregue',
-  CANCELLED: 'Cancelado',
 };
 
 export function OrdersPage() {
@@ -67,6 +49,9 @@ export function OrdersPage() {
       await apiSend(`/api/admin/orders/${id}/cancel`, 'POST');
       await queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
       await queryClient.invalidateQueries({ queryKey: ['admin', 'order', id] });
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard'] });
+      await queryClient.invalidateQueries({ queryKey: ['my-orders'] });
+      await queryClient.invalidateQueries({ queryKey: ['home'] });
     } catch (caught) {
       setError(caught instanceof ApiError ? caught.message : 'Não foi possível cancelar.');
     }
@@ -91,7 +76,7 @@ export function OrdersPage() {
                 </span>
                 <span className="flex items-center gap-3">
                   <span className="font-semibold text-price">{formatBRL(item.totalCents)}</span>
-                  <StatusChip status={item.paymentStatus} label={paymentLabel[item.paymentStatus] ?? item.paymentStatus} /><ChevronDown size={16} className={`text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+                  <StatusChip status={item.orderStatus} label={orderStatusLabel[item.orderStatus] ?? item.orderStatus} /><ChevronDown size={16} className={`text-ink-500 transition-transform ${open ? 'rotate-180' : ''}`} />
                 </span>
               </button>
               {open ? (
@@ -122,8 +107,8 @@ export function OrdersPage() {
                           <br />
                           {order.address.postalCode}
                         </p>
-                        <p className="mt-3 text-ink-500">Pagamento: {paymentMethodLabel(order.payment?.provider) || 'ainda não informado'}</p>
-                        <p className="text-ink-500">Situação: {orderLabel[order.orderStatus] ?? order.orderStatus}</p>
+                        <p className="mt-3 text-ink-500">Pagamento: {paymentMethodLabel(order.paymentMethod) || 'ainda não informado'}</p>
+                        <p className="text-ink-500">Situação: {orderStatusLabel[order.orderStatus] ?? order.orderStatus}</p>
                         <button
                           type="button"
                           className="btn-cart mt-4"
@@ -135,7 +120,7 @@ export function OrdersPage() {
                           Imprimir pedido
                         </button>
                         <p className="mt-2 text-xs text-ink-500">Na janela do Windows, escolha a MobilePrinter MPT-2. O papel é de 58 mm.</p>
-                        {order.paymentStatus === 'PENDING' ? (
+                        {order.orderStatus !== 'CANCELLED' ? (
                           <button type="button" className="mt-4 text-sm text-magenta-700" onClick={() => void cancel(order.id)}>
                             Cancelar e devolver o estoque
                           </button>
@@ -157,6 +142,6 @@ export function OrdersPage() {
 }
 
 function StatusChip({ status, label }: { status: string; label: string }) {
-  const tone = status === 'CANCELLED' ? 'bg-zinc-100 text-zinc-500' : status === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800';
+  const tone = status === 'CANCELLED' ? 'bg-zinc-100 text-zinc-500' : status !== 'CANCELLED' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800';
   return <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ${tone}`}>{label}</span>;
 }

@@ -1,3 +1,4 @@
+import { orderStatusLabel } from '../utils/order-status';
 import { ArrowRight, ChevronRight, Heart, LogOut, Mail, Package, ShoppingBag, Sparkles, UserRound } from 'lucide-react';
 import { LineThumb } from '../components/catalog/LineThumb';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -181,7 +182,7 @@ export function AccountPage() {
   if (!user) return <LoginPage />;
   const initial = user.name.trim().charAt(0).toUpperCase() || 'Y';
   const list = orders.data?.data;
-  const pending = list?.filter(order => order.paymentStatus === 'PENDING').length;
+  const confirmed = list?.filter(order => order.orderStatus !== 'CANCELLED').length;
 
   return (
     <main className="account-page store-wrap py-8 sm:py-12">
@@ -217,7 +218,7 @@ export function AccountPage() {
         <div className="min-w-0 space-y-6">
           <div className="grid grid-cols-3 gap-2 sm:gap-4">
             <AccountMetric label="Pedidos recentes" value={list ? String(list.length) : '—'} icon={ShoppingBag} />
-            <AccountMetric label="Aguardando pagamento" value={pending == null ? '—' : String(pending)} icon={Package} />
+            <AccountMetric label="Confirmados" value={confirmed == null ? '—' : String(confirmed)} icon={Package} />
             <AccountMetric label="Favoritos" value={String(favorites.length)} icon={Heart} />
           </div>
           <OrdersPreview orders={orders} />
@@ -230,30 +231,6 @@ export function AccountPage() {
 
 function AccountMetric({ label, value, icon: Icon }: { label: string; value: string; icon: typeof Heart }) {
   return <div className="account-metric"><Icon size={18} aria-hidden /><p className="mt-3 text-2xl font-semibold tracking-tight text-ink-900">{value}</p><p className="mt-1 text-[10px] leading-4 text-ink-500 sm:text-xs">{label}</p></div>;
-}
-
-const paymentLabel: Record<string, string> = {
-  PENDING: 'Aguardando pagamento',
-  PAID: 'Pago',
-  FAILED: 'Pagamento não concluído',
-  REFUNDED: 'Estornado',
-  PARTIALLY_REFUNDED: 'Estornado em parte',
-  CANCELLED: 'Cancelado',
-};
-
-const orderLabel: Record<string, string> = {
-  AWAITING_PAYMENT: 'Aguardando pagamento',
-  PAID_AWAITING_PROCESSING: 'Pago, aguardando separação',
-  PROCESSING: 'Em preparação',
-  SHIPPED: 'Enviado',
-  DELIVERED: 'Entregue',
-  CANCELLED: 'Cancelado',
-};
-
-function orderStatusText(paymentStatus: string, orderStatus: string) {
-  const payment = paymentLabel[paymentStatus] ?? paymentStatus;
-  const fulfillment = orderLabel[orderStatus] ?? orderStatus;
-  return payment === fulfillment ? payment : `${payment} · ${fulfillment}`;
 }
 
 function formatOrderDate(value: string) {
@@ -294,7 +271,7 @@ function OrdersPreview({ orders }: { orders: ReturnType<typeof useMyOrders> }) {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-ink-900">{order.orderNumber}</p>
-                    <p className="mt-1 text-xs text-ink-500">{formatOrderDate(order.createdAt)}</p><span className={`order-status mt-3 ${order.paymentStatus === 'CANCELLED' ? 'order-status-muted' : order.paymentStatus === 'PAID' ? 'order-status-paid' : ''}`}>{orderStatusText(order.paymentStatus, order.orderStatus)}</span>
+                    <p className="mt-1 text-xs text-ink-500">{formatOrderDate(order.createdAt)}</p><span className={`order-status mt-3 ${order.orderStatus === 'CANCELLED' ? 'order-status-muted' : order.orderStatus !== 'CANCELLED' ? 'order-status-paid' : ''}`}>{orderStatusLabel[order.orderStatus] ?? order.orderStatus}</span>
                   </div>
                   <p className="shrink-0 font-semibold text-price">{formatBRL(order.totalCents)}</p>
                 </div>

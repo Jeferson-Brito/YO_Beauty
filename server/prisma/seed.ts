@@ -490,7 +490,7 @@ export async function seed() {
   await ensureSection('secao-mais-vendidos', {
     title: 'Mais vendidos',
     subtitle: '',
-    description: 'Ranking calculado somente com pedidos pagos. Fica vazio até existir venda confirmada.',
+    description: 'Ranking calculado com pedidos confirmados e não cancelados.',
     type: 'best_sellers',
     placement: 'home-extra',
     active: false,
@@ -514,7 +514,7 @@ export async function seed() {
       'As visitas só são registradas depois de uma escolha explícita neste navegador. O identificador é aleatório e o servidor guarda apenas um código irreversível, sem IP e sem fingerprinting.',
       'A retenção dos eventos é de 180 dias. Recusar ou apagar a escolha remove as visitas daquele navegador.',
       'Visitantes únicos são uma estimativa do navegador e não uma identificação de pessoa física.',
-      'Uma compra só entra no faturamento quando o pagamento for confirmado. O pedido pendente não é uma venda.',
+      'O pedido confirmado para envio ao WhatsApp conta como venda, exceto se for cancelado. O site registra a forma de pagamento escolhida, sem processar nem verificar pagamentos.',
       'Pedidos guardam o necessário para a compra, inclusive um retrato do endereço no momento do pedido.',
     ].join('\n\n'),
   );

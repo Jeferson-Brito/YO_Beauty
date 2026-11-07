@@ -14,14 +14,12 @@ type Dashboard = {
   summary: {
     revenueCents: number;
     revenueChange: number | null;
-    paidOrders: number;
+    confirmedOrders: number;
     averageTicketCents: number;
     ticketChange: number | null;
     createdOrders: number;
-    pendingPayment: number;
     cancelled: number;
     processing: number;
-    refunded: number;
     registeredCustomers: number;
     newCustomers: number;
     buyers: number;
@@ -32,7 +30,7 @@ type Dashboard = {
     pageViews: number;
     conversion: number | null;
   };
-  series: { date: string; revenueCents: number; paidOrders: number }[];
+  series: { date: string; revenueCents: number; confirmedOrders: number }[];
   productsByQuantity: Rank[];
   productsByRevenue: Rank[];
   categories: Rank[];
@@ -147,20 +145,18 @@ function Report({ data }: { data: Dashboard }) {
         <Card title="Faturamento total" metric={data.cards.total} icon={Users} />
       </div>
       <Panel title="Faturamento no período">
-        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-3xl font-semibold tracking-tight text-ink-900">{formatBRL(data.summary.revenueCents)}</p><p className="mt-2 text-xs text-ink-500">Referência {data.period.referenceDate} · {changeLabel(data.summary.revenueChange)}</p></div><span className="order-status">Somente pedidos pagos</span></div>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><p className="text-3xl font-semibold tracking-tight text-ink-900">{formatBRL(data.summary.revenueCents)}</p><p className="mt-2 text-xs text-ink-500">Referência {data.period.referenceDate} · {changeLabel(data.summary.revenueChange)}</p></div><span className="order-status">Vendas não canceladas</span></div>
         {data.series.some(row => row.revenueCents > 0) ? <div className="admin-revenue-chart mt-6 flex h-48 items-end gap-1" role="img" aria-label={`Faturamento no período: ${formatBRL(data.summary.revenueCents)}`}>
           {data.series.map(row => <div key={row.date} className="group flex h-full min-w-0 flex-1 items-end" title={`${row.date}: ${formatBRL(row.revenueCents)}`}><div className="revenue-bar w-full rounded-t-md" style={{ height: `${(row.revenueCents / max) * 100}%` }} /></div>)}
-        </div> : <div className="admin-chart-empty my-6"><BarChart3 size={30} strokeWidth={1.25} /><p className="mt-3 text-sm font-medium text-ink-700">Seus resultados começam aqui</p><p className="mt-1 text-xs text-ink-500">Ainda não há faturamento de pedidos pagos neste período.</p></div>}
+        </div> : <div className="admin-chart-empty my-6"><BarChart3 size={30} strokeWidth={1.25} /><p className="mt-3 text-sm font-medium text-ink-700">Seus resultados começam aqui</p><p className="mt-1 text-xs text-ink-500">Ainda não há vendas confirmadas neste período.</p></div>}
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="admin-summary-block rounded-xl p-4 text-sm">
             <p className="font-medium text-magenta-700">Vendas</p>
-            <p className="mt-2">Pedidos pagos: {data.summary.paidOrders}</p>
+            <p className="mt-2">Vendas confirmadas: {data.summary.confirmedOrders}</p>
             <p>Ticket médio: {formatBRL(data.summary.averageTicketCents)} ({changeLabel(data.summary.ticketChange)})</p>
             <p>Pedidos criados: {data.summary.createdOrders}</p>
-            <p>Pendentes: {data.summary.pendingPayment}</p>
             <p>Cancelados: {data.summary.cancelled}</p>
             <p>Em preparação: {data.summary.processing}</p>
-            <p>Estornados: {data.summary.refunded}</p>
           </div>
           <div className="admin-summary-block rounded-xl p-4 text-sm">
             <p className="font-medium text-magenta-700">Clientes</p>
@@ -223,7 +219,7 @@ function Card({ title, metric, icon: Icon }: { title: string; metric: Metric; ic
 function RankList({ title, rows }: { title: string; rows: Rank[] }) {
   return (
     <Panel title={title}>
-      {rows.length === 0 ? <p className="text-sm text-ink-500">Sem venda paga neste período.</p> : null}
+      {rows.length === 0 ? <p className="text-sm text-ink-500">Sem vendas confirmadas neste período.</p> : null}
       <ul className="space-y-2 text-sm">
         {rows.map((row) => (
           <li key={row.name} className="flex items-start justify-between gap-4 border-b border-blush-100 py-3 last:border-0">

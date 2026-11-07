@@ -15,7 +15,7 @@ describe('métricas comerciais', () => {
     expect(effectivePriceCents(4990, 5000)).toBe(4990);
   });
 
-  it('não transforma pedido pendente, cancelado ou estornado em faturamento', () => {
+  it('conta pedidos não cancelados sem depender de pagamento', () => {
     const summary = summarizeSales([
       { paymentStatus: 'PENDING', orderStatus: 'AWAITING_PAYMENT', totalCents: 5000, refundedAmountCents: 0, userId: 'a' },
       { paymentStatus: 'PAID', orderStatus: 'CANCELLED', totalCents: 8000, refundedAmountCents: 0, userId: 'a' },
@@ -30,18 +30,18 @@ describe('métricas comerciais', () => {
       },
     ]);
 
-    expect(summary.revenueCents).toBe(17500);
-    expect(summary.paidOrders).toBe(2);
-    expect(summary.averageTicketCents).toBe(8750);
+    expect(summary.revenueCents).toBe(25000);
+    expect(summary.confirmedOrders).toBe(3);
+    expect(summary.averageTicketCents).toBe(8333);
     expect(summary.distinctCustomers).toBe(2);
-    expect(netRevenueCents({ paymentStatus: 'PENDING', orderStatus: 'AWAITING_PAYMENT', totalCents: 1000, refundedAmountCents: 0 })).toBe(0);
+    expect(netRevenueCents({ paymentStatus: 'PENDING', orderStatus: 'AWAITING_PAYMENT', totalCents: 1000, refundedAmountCents: 0 })).toBe(1000);
   });
 
-  it('retorna ticket zero quando não há venda paga', () => {
+  it('retorna ticket zero quando não há venda confirmada', () => {
     const summary = summarizeSales([]);
     expect(summary.averageTicketCents).toBe(0);
     expect(summary.revenueCents).toBe(0);
-    expect(summary.paidOrders).toBe(0);
+    expect(summary.confirmedOrders).toBe(0);
   });
 
   it('omite variação percentual quando o período anterior não tem base', () => {
@@ -55,15 +55,14 @@ describe('métricas comerciais', () => {
     expect(conversionRate(1, 0)).toBeNull();
   });
 
-  it('separa pedidos criados de pedidos pagos', () => {
+  it('separa vendas confirmadas de pedidos cancelados', () => {
     const counts = countOrdersByStatus([
       { paymentStatus: 'PENDING', orderStatus: 'AWAITING_PAYMENT' },
       { paymentStatus: 'PAID', orderStatus: 'PROCESSING' },
       { paymentStatus: 'CANCELLED', orderStatus: 'CANCELLED' },
     ]);
     expect(counts.created).toBe(3);
-    expect(counts.paid).toBe(1);
-    expect(counts.pendingPayment).toBe(1);
+    expect(counts.confirmed).toBe(2);
     expect(counts.processing).toBe(1);
     expect(counts.cancelled).toBe(1);
   });

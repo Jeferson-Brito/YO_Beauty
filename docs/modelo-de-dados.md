@@ -24,14 +24,14 @@ Dinheiro é sempre inteiro em centavos: `priceCents`, `totalCents`, `refundedAmo
 - `Session`: hash do token e expiração.
 - `PasswordResetToken`: reservado para a recuperação de senha. O fluxo ainda não está exposto.
 - `Address`: endereços do cliente.
-- `Order`: número, cliente, retrato do endereço, totais, `paymentStatus` e `orderStatus`.
+- `Order`: número, cliente, retrato do endereço, totais, `paymentMethod` (forma escolhida) e `orderStatus`.
 - `OrderItem`: nome, SKU e preço copiados no momento da compra.
 - `Payment`: provedor, status, valor e `paidAt`.
 - `Favorite`: favorito por cliente autenticado.
 
 Status de pagamento: `PENDING`, `PAID`, `FAILED`, `REFUNDED`, `PARTIALLY_REFUNDED`, `CANCELLED`.
 
-Status do pedido: `AWAITING_PAYMENT`, `PAID_AWAITING_PROCESSING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
+Status do pedido: `CONFIRMED`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`.
 
 ## Analytics
 
@@ -54,3 +54,5 @@ Pedido não apaga o usuário (`Restrict`). Item de pedido mantém o texto se o p
 O seed cria categorias, 14 produtos, seções, banners, configurações e quatro páginas. Ele cria o registro só quando o slug ou o id ainda não existe.
 
 Não cria administrador, pedido, pagamento nem evento. A seção “Mais vendidos” fica inativa e a consulta dela só enxerga pedido pago.
+
+Registros e colunas legados de pagamento são mantidos para preservar o histórico, mas não são usados nas regras de venda. Novos pedidos não criam `Payment`. O estado `CONFIRMED` conta como venda; `CANCELLED` exclui a venda dos indicadores.

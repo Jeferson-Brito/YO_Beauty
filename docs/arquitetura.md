@@ -23,7 +23,7 @@ A paleta é magenta, rosa-claro, branco e dourado. A logo oficial já está em `
 - A categoria principal do produto não é uma coluna única. A associação é de muitos para muitos, com uma categoria marcada como principal, porque um item pode estar em Maquiagem e também em Kits ou Lançamentos.
 - Autenticação própria. A senha fica com bcrypt. A sessão é um token aleatório; o banco guarda só o SHA-256. O cookie `yb_session` é `httpOnly`, `SameSite=Lax` e `Secure` em produção.
 - O cadastro público grava somente `CLIENT`. O administrador nasce pelo comando `npm run admin:create`. Um cliente existente não é promovido.
-- Pedido pendente não é venda. O faturamento usa a data `paidAt` do pagamento confirmado. A regra está em código e em [métricas comerciais](metricas-comerciais.md).
+- Pedido confirmado para envio ao WhatsApp é venda. O faturamento usa `Order.createdAt`, exclui cancelamentos e não depende de pagamento. A regra está em código e em [métricas comerciais](metricas-comerciais.md).
 - Analytics é configurável e só registra visitas após consentimento explícito.
 - Uploads passam pela interface `StorageProvider` e são persistidos na tabela `StoredImage` do PostgreSQL. A URL `/uploads` permanece estável entre deploys.
 - Fuso comercial inicial: `America/Recife`. Os instantes são gravados em UTC e os limites dos períodos são calculados nesse fuso.
@@ -83,7 +83,7 @@ Pedidos e visitas:
 - `POST /api/orders` e `GET /api/orders` exigem sessão
 - `POST /api/analytics/consent` e `POST /api/analytics/events` exigem consentimento e não aceitam compra vinda do navegador
 
-Carrinho e favoritos ficam no navegador. Adicionar ao carrinho exige login e guarda a intenção até a autenticação. O pedido é gravado com preço e estoque conferidos no servidor, e nasce aguardando pagamento. Nenhuma cobrança é processada.
+Carrinho e favoritos ficam no navegador. Adicionar ao carrinho exige login e guarda a intenção até a autenticação. O pedido é gravado com preço e estoque conferidos no servidor, e nasce confirmado para envio ao WhatsApp. Nenhuma cobrança é processada.
 
 O card público informa `in_stock`, `low_stock` ou `out_of_stock`. O detalhe e a cotação retornam a quantidade disponível para limitar os seletores do carrinho.
 
@@ -92,11 +92,11 @@ O card público informa `in_stock`, `low_stock` ou `out_of_stock`. O detalhe e a
 1. Fundação. Esta etapa.
 2. Vitrine fiel à referência, em desktop e depois em telas menores.
 3. Painel: produtos, categorias, seções, banners, configurações e autorização completa.
-4. Carrinho de visitante, login no checkout e pedido pendente, com estoque validado no servidor.
+4. Carrinho de visitante, login no checkout e pedido confirmado, com estoque validado no servidor.
 5. Analytics anônimo, com consentimento, sessão de 30 minutos e deduplicação. Entregue.
 6. Dashboard com os indicadores, gráficos, fidelização e exportação CSV. Entregue.
 7. Testes, revisão de segurança e documentação de publicação. Entregue.
 
-A integração de pagamento fica para uma etapa própria. Pedido pendente continua fora do faturamento.
+Não há integração de pagamento no site. A forma escolhida pelo cliente aparece no WhatsApp e na impressão; cancelamentos retiram a venda dos indicadores.
 
 Cada etapa seguinte espera validação antes de um bloco grande de funcionalidade.

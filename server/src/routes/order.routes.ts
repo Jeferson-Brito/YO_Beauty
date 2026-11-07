@@ -1,6 +1,6 @@
 import { Router, type RequestHandler } from 'express';
 import { env } from '../config/env';
-import { getMyOrder, listMyOrders, placeOrder, quoteCart } from '../controllers/order.controller';
+import { cancelMyOrder, getMyOrder, listMyOrders, placeOrder, quoteCart } from '../controllers/order.controller';
 import { requireAuth } from '../middlewares/auth';
 import { orderRateLimit } from '../middlewares/rate-limit';
 
@@ -12,3 +12,5 @@ orderRoutes.post('/checkout/quote', quoteCart);
 orderRoutes.post('/orders', limitOrder, requireAuth, placeOrder);
 orderRoutes.get('/orders', requireAuth, listMyOrders);
 orderRoutes.get('/orders/:id', requireAuth, getMyOrder);
+
+orderRoutes.post('/orders/:id/cancel', limitOrder, requireAuth, cancelMyOrder);
