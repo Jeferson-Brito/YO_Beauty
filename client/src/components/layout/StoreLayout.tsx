@@ -77,9 +77,10 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [searchExpanded, setSearchExpanded] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const compact = scrolled || location.pathname !== '/';
+  const compact = scrolled;
   const categoryLinks = categories.filter((category) => category.slug !== 'lancamentos' && category.slug !== 'promocoes');
   const onCategoryPage = categoryLinks.some((category) => location.pathname === `/categoria/${category.slug}`);
   const query = term.trim();
@@ -90,7 +91,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
   });
 
   useEffect(() => {
-    let compactNow = window.scrollY > 160;
+    let compactNow = false;
     const onScroll = () => {
       const y = window.scrollY;
       const next = compactNow ? y > 48 : y > 160;
@@ -102,6 +103,24 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
+
+  useEffect(() => {
+    if (searchExpanded) formRef.current?.querySelector('input')?.focus();
+  }, [searchExpanded]);
+
+  useEffect(() => {
+    if (!open) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    headerRef.current?.querySelector<HTMLButtonElement>('.store-mobile-menu button')?.focus({ preventScroll: true });
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setOpen(false); };
+    window.addEventListener('keydown', close);
+    return () => {
+      document.body.style.overflow = previous;
+      window.removeEventListener('keydown', close);
+      headerRef.current?.querySelector<HTMLButtonElement>('button[aria-label="Abrir menu"]')?.focus({ preventScroll: true });
+    };
+  }, [open]);
 
   useEffect(() => {
     const node = headerRef.current;
@@ -122,6 +141,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
     setTerm(new URLSearchParams(location.search).get('q') ?? '');
     setSuggestOpen(false);
     setOpen(false);
+    setSearchExpanded(false);
   }, [location.pathname, location.search]);
 
   useEffect(() => {
@@ -150,12 +170,12 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
   const waiting = query.length > 0 && (query !== debounced || suggestions.isFetching);
 
   return (
-    <header ref={headerRef} className="store-header bg-header">
-      <div className={`store-wrap grid grid-cols-[auto_1fr_auto] items-center lg:grid-cols-[1fr_auto_1fr] ${compact ? 'gap-3 py-2' : 'gap-4 py-4'}`}>
-        <button type="button" className="grid h-11 w-11 place-items-center text-ink-700 transition hover:text-magenta-600 lg:hidden" aria-label="Abrir menu" aria-expanded={open} onClick={() => setOpen(true)}>
+    <header ref={headerRef} className={`store-header bg-header ${compact ? 'is-compact' : ''}`}>
+      <div className={`header-main store-wrap grid grid-cols-[auto_1fr_auto] items-center lg:grid-cols-[1fr_auto_1fr] ${compact ? 'gap-3 py-2' : 'gap-4 py-4'}`}>
+        <button type="button" className={`grid h-11 w-11 place-items-center text-ink-700 transition hover:text-magenta-600 ${compact ? '' : 'lg:hidden'}`} aria-label="Abrir menu" aria-expanded={open} onClick={() => setOpen(true)}>
           <Menu />
         </button>
-        <form ref={formRef} onSubmit={search} className={`relative col-span-3 lg:col-span-1 lg:col-start-1 ${suggestOpen ? 'z-20' : ''}`}>
+        <form id="header-search" ref={formRef} onSubmit={search} className={`header-search relative col-span-3 lg:col-span-1 lg:col-start-1 ${suggestOpen ? 'z-20' : ''} ${searchExpanded ? 'search-expanded' : ''}`}>
           <label className="relative block">
             <span className="sr-only">Buscar produtos</span>
             <button type="submit" className="absolute top-1/2 left-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-ink-500 transition hover:text-magenta-600" aria-label="Pesquisar">
@@ -176,7 +196,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
                 if (query.length > 0) setSuggestOpen(true);
               }}
               onKeyDown={(event) => {
-                if (event.key === 'Escape') setSuggestOpen(false);
+                if (event.key === 'Escape') { setSuggestOpen(false); setSearchExpanded(false); }
               }}
               placeholder="O que você procura?"
               className={`w-full rounded-full border border-blush-200 bg-white pr-4 pl-11 text-sm outline-none placeholder:text-ink-500 focus:border-magenta-400 lg:max-w-xs ${compact ? 'py-2' : 'py-2.5'}`}
@@ -216,10 +236,11 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
           <img
             src="/brand/logo-horizontal.png"
             alt="Yo Beauty"
-            className="h-auto w-[132px] object-contain sm:w-[156px] lg:w-[180px]"
+            className="header-logo h-auto w-[132px] object-contain sm:w-[156px] lg:w-[180px]"
           />
         </Link>
         <div className={`col-start-3 row-start-1 flex items-center justify-end text-ink-700 ${compact ? 'gap-4' : 'gap-5'}`}>
+          {compact ? <button type="button" className="grid h-10 w-10 place-items-center rounded-full hover:bg-white/60" aria-label="Abrir busca" aria-expanded={searchExpanded} aria-controls="header-search" onClick={() => setSearchExpanded(value => !value)}><Search size={20} /></button> : null}
           <Link to={user ? '/minha-conta' : '/login'} aria-label="Minha conta" className="hidden text-center transition hover:text-magenta-600 sm:block">
             <UserRound className="mx-auto" size={22} />
             <span className={compact ? 'sr-only' : 'mt-1 block text-[11px] leading-tight'}>{user ? user.name.split(' ')[0] : 'Entrar'}</span>
@@ -238,7 +259,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
           </Link>
         </div>
       </div>
-      <nav className={`store-wrap hidden items-start justify-center lg:flex ${compact ? 'gap-x-6 gap-y-2 pb-2' : 'gap-x-8 gap-y-3 pb-4'}`} aria-label="Categorias">
+      <nav className={`header-categories store-wrap hidden items-start justify-center lg:flex ${compact ? 'gap-x-6 gap-y-2 pb-2' : 'gap-x-8 gap-y-3 pb-4'}`} aria-label="Categorias">
         <NavLink to="/" end className="nav-link inline-flex h-5 items-center leading-none">
           Início
         </NavLink>
@@ -274,7 +295,7 @@ function SiteHeader({ categories }: { categories: { name: string; slug: string }
         </NavLink>
       </nav>
       {open ? (
-        <div className="fixed inset-0 z-40 bg-ink-900/40 lg:hidden" onClick={() => setOpen(false)}>
+        <div className={`store-mobile-menu fixed inset-0 z-40 bg-ink-900/40 ${compact ? '' : 'lg:hidden'}`} onClick={() => setOpen(false)}>
           <div className="menu-enter h-full w-[min(320px,88vw)] overflow-y-auto bg-header p-6" onClick={(event) => event.stopPropagation()}>
             <button type="button" className="transition hover:text-magenta-600" aria-label="Fechar menu" onClick={() => setOpen(false)}>
               <X />

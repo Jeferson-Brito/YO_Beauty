@@ -403,3 +403,16 @@
     .account-profile-top { padding-bottom: 16px; }
   }
 }
+
+/* O modo compacto prevalece sobre as classes responsivas de tamanho. */
+.store-header.is-compact .header-main { grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; padding-block: 6px; }
+.store-header.is-compact .header-logo { width: 112px; height: 36px; }
+.store-header.is-compact .header-categories { display: none; }
+.store-header.is-compact .header-search { display: none; }
+.store-header.is-compact .header-search.search-expanded { display: block; grid-column: 1 / -1; grid-row: 2; padding-bottom: 4px; }
+.store-header.is-compact .header-search input { max-width: none; }
+.store-header:has(.store-mobile-menu) { backdrop-filter: none; }
+.admin-topbar { transition: min-height .2s ease; }
+.admin-topbar.is-compact { min-height: 56px; }
+.admin-topbar.is-compact > div:first-child > div > p:first-child { display: none; }
+.admin-topbar.is-compact > div:first-child > div > p:last-child { margin-top: 0; }

@@ -66,6 +66,17 @@ export function AdminLayout() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [exitError, setExitError] = useState('');
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    let compact = false;
+    const onScroll = () => {
+      const next = window.scrollY > (compact ? 24 : 80);
+      if (next !== compact) { compact = next; setScrolled(next); }
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
   const menuRef = useRef<HTMLElement>(null);
   const menuTrigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { setMenuOpen(false); window.scrollTo({ top: 0, behavior: 'instant' }); }, [location.pathname]);
@@ -113,7 +124,7 @@ export function AdminLayout() {
           <div className="mx-4 mb-5 border-t border-white/10 pt-5"><div className="flex items-center gap-3 px-2"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold-300 text-sm font-semibold text-magenta-900">{initial}</span><div className="min-w-0"><p className="truncate text-xs font-semibold text-white">{user.name}</p><p className="mt-1 text-[10px] text-white/45">Administração</p></div></div></div>
         </aside>
         <div className="min-w-0">
-          <header className="admin-topbar sticky top-0 z-20 flex min-h-20 items-center justify-between gap-3 px-4 sm:px-7 lg:px-9">
+          <header className={`admin-topbar sticky top-0 z-20 flex min-h-20 items-center justify-between gap-3 px-4 sm:px-7 lg:px-9 ${scrolled ? 'is-compact' : ''}`}>
             <div className="flex min-w-0 items-center gap-3">
               <button ref={menuTrigger} type="button" className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-blush-200 bg-white lg:hidden" aria-label="Abrir menu do painel" aria-controls="admin-navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen(open => !open)}><Menu size={19} /></button>
               <div className="min-w-0"><p className="hidden text-[10px] tracking-[.12em] text-ink-500 uppercase sm:block">Seu espaço de gestão</p><p className="mt-1 flex items-center gap-2 truncate text-sm font-medium"><span className="hidden text-ink-500 sm:inline">Painel</span><ChevronRight size={13} className="hidden text-ink-500 sm:block" />{current?.label ?? 'Loja'}</p></div>
